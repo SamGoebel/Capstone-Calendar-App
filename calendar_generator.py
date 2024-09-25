@@ -61,6 +61,6 @@ def events(gen):
     for entry in first_5_dates_with_events:
         print(entry)
 
-    
+    print("hi")
 
     
