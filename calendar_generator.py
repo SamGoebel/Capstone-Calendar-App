@@ -1,3 +1,4 @@
+import pickle
 from datetime import datetime, timedelta
 
 def generate_dates_with_events_until_2100():
@@ -16,7 +17,7 @@ def generate_dates_with_events_until_2100():
         # Create a dictionary for each date with an empty list for events
         date_entry = {
             'date': current_date.strftime('%m-%d-%Y'),
-            'events': []  # You can add events to this list later
+            'events': [] 
         }
         
         # Append the date entry to the array
@@ -27,15 +28,34 @@ def generate_dates_with_events_until_2100():
     
     return date_array
 
+calendar_template = generate_dates_with_events_until_2100()
+
+with open('calendar_template.pkl', 'wb') as file:
+    pickle.dump(calendar_template, file)
+
+def load_calendar():
+    with open('calendar_template.pkl', 'rb') as file:
+        return pickle.load(file)
+
+def add_events(gen): #Fix this
+    event_days = gen
+    event_days[0]['events'].append("Start working on project")
+    event_days[20]['events'].append("Project End")
+    return event_days
+
+def save_event_list(gen):
+    event_adder = add_events(gen)   
+    with open('dates_with_events.pkl', 'rb') as file:
+        pickle.dump(event_adder,file)
+
+def load_event_list():
+    with open('dates_with_events.pkl', 'rb') as file:
+        return pickle.load(file)
+
 def events(gen):
     # Call the function and store the result
     event_days = gen
-
-    # Example: Add an event to the first date
-    event_days[0]['events'].append("Start working on project")
-    event_days[20]['events'].append("Project End")
-
-
+    
     #Function to grab dates with events
     def get_dates_with_events(dates_with_events):
         # List to store dates with events
@@ -58,9 +78,27 @@ def events(gen):
     first_5_dates_with_events = get_dates_with_events(event_days)
 
     # Print the first 5 dates with events
+    print("Dates with Events are:\n")
     for entry in first_5_dates_with_events:
         print(entry)
 
-    
+def event_search(gen, event_date, searched_event):
+        
+        event_days = gen
+        search_date = event_date
+        search_event = searched_event
+        
+        found_event = None
+        
+        for event in event_days:
+            if event['date'] == search_date and search_event in event['events']:
+                found_event = event
+                break
+
+        # Output the result
+        if found_event:
+            print(f"\n{found_event['date']}: {search_event}")
+        else:
+            print(f"No event found on '{search_date}' with an event '{search_event}'")
 
     
