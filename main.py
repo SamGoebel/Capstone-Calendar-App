@@ -1,17 +1,17 @@
 import calendar 
 from calendar_object import CalendarCreation
-from calendar_generator import generate_dates_with_events_until_2100, events, event_search, load_calendar, add_events, load_event_list, save_event_list
+from calendar_generator import generate_dates_with_events_until_2100, events, event_search, save_calendar, load_calendar, add_events, load_event_list, save_event_list, check_template, check_event_list
 
 
 cc = CalendarCreation()
 
 #generate = generate_dates_with_events_until_2100()
 
-calendar_check = load_calendar()
-#print(len(calendar_check))
+#calendar_save = save_calendar(generate)
+calendar_check = load_calendar() # loads calendar file to be used for other methods
 
 event_add = add_events(calendar_check)
-event_save = save_event_list(calendar_check)
+event_save = save_event_list(event_add)
 event_list_load = load_event_list()
 print(event_list_load)
 

@@ -1,4 +1,4 @@
-import pickle
+import pickle, pprint
 from datetime import datetime, timedelta
 
 def generate_dates_with_events_until_2100():
@@ -28,14 +28,20 @@ def generate_dates_with_events_until_2100():
     
     return date_array
 
-calendar_template = generate_dates_with_events_until_2100()
-
-with open('calendar_template.pkl', 'wb') as file:
-    pickle.dump(calendar_template, file)
+#calendar_template = generate_dates_with_events_until_2100()
+def save_calendar(calendar_template):
+    with open('calendar_template.pkl', 'wb') as file:
+        pickle.dump(calendar_template, file)
 
 def load_calendar():
     with open('calendar_template.pkl', 'rb') as file:
         return pickle.load(file)
+
+def check_template():
+    obj = pickle.load(open("calendar_template.pkl", "rb"))
+
+    with open("calendar_template_output.txt", "a") as f:
+         pprint.pprint(obj, stream=f)
 
 def add_events(gen): #Fix this
     event_days = gen
@@ -44,13 +50,19 @@ def add_events(gen): #Fix this
     return event_days
 
 def save_event_list(gen):
-    event_adder = add_events(gen)   
-    with open('dates_with_events.pkl', 'rb') as file:
+    event_adder = gen   
+    with open('dates_with_events.pkl', 'wb') as file:
         pickle.dump(event_adder,file)
 
 def load_event_list():
     with open('dates_with_events.pkl', 'rb') as file:
         return pickle.load(file)
+
+def check_event_list():
+    obj = pickle.load(open("dates_with_events.pkl", "rb"))
+
+    with open("events_output.txt", "a") as f:
+         pprint.pprint(obj, stream=f)
 
 def events(gen):
     # Call the function and store the result
@@ -68,7 +80,7 @@ def events(gen):
                 events = ', '.join(entry['events'])
                 dates_with_real_events.append(f"{date} ({events})")
             
-            # Stop once we have 5 dates with events
+            # Stop once we have 100 dates with events
             if len(dates_with_real_events) == 100:
                 break
         
