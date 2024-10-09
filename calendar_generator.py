@@ -1,4 +1,4 @@
-import pickle, pprint
+import pickle, pprint, os
 from datetime import datetime, timedelta
 
 def generate_dates_with_events_until_2100():
@@ -28,27 +28,60 @@ def generate_dates_with_events_until_2100():
     
     return date_array
 
-#calendar_template = generate_dates_with_events_until_2100()
+calendar_template = generate_dates_with_events_until_2100()
+
 def save_calendar(calendar_template):
-    with open('calendar_template.pkl', 'wb') as file:
+    
+    current_dir = os.path.dirname(__file__)
+
+    calendar_path = os.path.join(current_dir, 'resources', 'calendar_template.pkl')
+    with open(calendar_path, 'wb') as file:
         pickle.dump(calendar_template, file)
 
 def load_calendar():
-    with open('calendar_template.pkl', 'rb') as file:
+    # Get the directory of the current file (main script location)
+    current_dir = os.path.dirname(__file__)
+
+    # Build the path to the calendar_template.pkl in the resources folder
+    calendar_path = os.path.join(current_dir, 'resources', 'calendar_template.pkl')
+
+    # Open and load the pickle file
+    with open(calendar_path, 'rb') as file:
         return pickle.load(file)
 
+
 def check_template():
-    obj = pickle.load(open("calendar_template.pkl", "rb"))
+    
+    current_dir = os.path.dirname(__file__)
+    calendar_path = os.path.join(current_dir, 'resources', 'calendar_template.pkl')
+    
+    obj = pickle.load(open(calendar_path, "rb"))
 
     with open("calendar_template_output.txt", "a") as f:
          pprint.pprint(obj, stream=f)
 
 def save_user_calendar(user_calendar, user):
-    with open(f'{user}_calendar.pkl', 'wb') as file:
+    
+    current_dir = os.path.dirname(__file__)
+    path = user_calendar_path = os.path.join(current_dir, 'users', f'{user}')
+    if not os.path.exists(path):
+        # Create the directory
+        os.mkdir(path)
+        print(f"User Folder '{path}' created successfully.")
+    else:
+        print(f"User Folder '{path}' already exists.")
+    
+    user_calendar_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_calendar.pkl')
+    
+    
+    with open(user_calendar_path, 'wb') as file:
         pickle.dump(user_calendar, file)
 
 def load_user_calendar(user):
-    with open(f'{user}_calendar.pkl', 'rb') as file:
+    
+    current_dir = os.path.dirname(__file__)
+    user_calendar_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_calendar.pkl')
+    with open(user_calendar_path, 'rb') as file:
         return pickle.load(file)
 
 def add_events(calendar, date, event): 
@@ -68,12 +101,17 @@ def add_events(calendar, date, event):
 
 def save_event_list(gen, user):
     event_adder = gen   
-    with open(f'{user}_calendar.pkl', 'wb') as file:
+    current_dir = os.path.dirname(__file__)
+    user_calendar_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_calendar.pkl')
+    with open(user_calendar_path, 'wb') as file:
         pickle.dump(event_adder, file)
     print ("Events Saved")
 
-def load_event_list(user):
-    with open(f'{user}_calendar.pkl', 'rb') as file:
+def load_event_list(user): # Might need to remove due to it being the same as load_user_calendar
+    current_dir = os.path.dirname(__file__)
+    user_calendar_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_calendar.pkl')
+
+    with open(user_calendar_path, 'rb') as file:
         return pickle.load(file)
 
 def check_event_list(user):
