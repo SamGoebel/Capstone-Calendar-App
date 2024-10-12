@@ -27,7 +27,7 @@ event_list = emr.loading_events(set_user)
 
 event_manager = all_events(event_list)
 
-search_date = input("Enter Date (DD-MM-YYYY): ")
+search_date = input("Enter Search Date (DD-MM-YYYY): ")
 search_event = input("Enter name of event: ")
 
 if search_date == None:
@@ -41,8 +41,6 @@ event_delete(event_list, "Sonic")
 #date = cc.DateObject(25, 9, 2024) #takes numbers for days
 
 #calendar_print = cc.CalendarPrint(10, 2024)
-
-
 
 #print(date)
 

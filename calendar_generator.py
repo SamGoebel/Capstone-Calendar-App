@@ -78,7 +78,6 @@ def save_user_calendar(user_calendar, user):
         pickle.dump(user_calendar, file)
 
 def load_user_calendar(user):
-    
     current_dir = os.path.dirname(__file__)
     user_calendar_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_calendar.pkl')
     with open(user_calendar_path, 'rb') as file:
@@ -120,41 +119,6 @@ def check_event_list(user):
     with open(f"{user}_events_output.txt", "a") as f:
          pprint.pprint(obj, stream=f)
 
-def all_events(gen):
-    # Call the function and store the result
-    event_days = gen
-    
-    #Function to grab dates with events
-    def get_dates_with_events(dates_with_events):
-        # List to store dates with events
-        dates_with_real_events = []
-        if dates_with_events == None:
-            return 0
-       
-        # Iterate over the dates and select those that have events
-        for entry in dates_with_events:
-            if entry['events']:  # Check if the events list is not empty
-                date = entry['date']
-                events = ', '.join(entry['events'])
-                dates_with_real_events.append(f"{date} ({events})")
-            '''
-            # Stop once we have 100 dates with events
-            if len(dates_with_real_events) == 100:
-                break
-            '''
-        return dates_with_real_events
-
-    # Get the first 5 dates with events
-    dates_with_events = get_dates_with_events(event_days)
-
-    # Print the first 5 dates with events
-    if dates_with_events != 0:
-        print("Dates with Events are:\n")
-        for entry in dates_with_events:
-            print(entry)
-    else:
-        print("No dates with events found")
-        return None
 
 def event_search(gen, event_date, searched_event):
         
