@@ -10,15 +10,15 @@ def show_frame(frame):
 
 # Create the main window
 root = tk.Tk()
-root.title("Switching Screens Example")
+root.title("Calendar App Test")
 root.geometry("1200x800")
 
 # Create two frames (screens) in the same window
 main_frame = tk.Frame(root)
-greeting_frame = tk.Frame(root)
+user_viewer_frame = tk.Frame(root)
 user_config_frame = tk.Frame(root)
 
-for frame in (main_frame, greeting_frame, user_config_frame):
+for frame in (main_frame, user_viewer_frame, user_config_frame):
     frame.grid(row=0, column=0, sticky='nsew')
 
 # ----- Main Screen -----
@@ -26,33 +26,16 @@ main_label = tk.Label(main_frame, text="This is the Main Screen")
 main_label.pack(pady=20)
 
 # Buttons to go to other Screens
-main_button = tk.Button(main_frame, text="Go to Greeting Screen", command=lambda: show_frame(greeting_frame))
-main_button.pack(pady=10)
-
 uc_button = tk.Button(main_frame, text="Go to User Screen", command=lambda: show_frame(user_config_frame))
 uc_button.pack(pady=10)
 
-# ----- Greeting Screen -----
-def greet_user():
-    name = entry.get()
-    if name:
-        messagebox.showinfo("Greeting", f"Hello, {name}!")
-    else:
-        messagebox.showwarning("Input Error", "Please enter your name.")
+# Restore Template Function
+def template_maker():
+    template = generate_dates_with_events_until_2100()
+    save_calendar(template)
 
-greeting_label = tk.Label(greeting_frame, text="Enter your name:")
-greeting_label.pack(pady=10)
-
-entry = tk.Entry(greeting_frame)
-entry.pack(pady=10)
-
-
-greet_button = tk.Button(greeting_frame, text="Greet", command=greet_user)
-greet_button.pack(pady=10)
-
-# Button to go back to the Main Screen
-back_button = tk.Button(greeting_frame, text="Go back", command=lambda: show_frame(main_frame))
-back_button.pack(pady=10)
+restore_template_button = tk.Button(main_frame, text= "Restore Calendar Template", command= template_maker, fg="black", bg="lightgray")
+restore_template_button.pack(pady=20)
 
 
 # ----- User Config Screen -----
@@ -60,12 +43,22 @@ def load_user_calendar():
     user = user_entry.get()
     current_dir = os.path.dirname(__file__)
     user_calendar_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_calendar.pkl')
-    with open(user_calendar_path, 'rb') as file:
-        messagebox.showinfo(message= "User " f'{user}' " was found")
-        return pickle.load(file)
+    try:
+        with open(user_calendar_path, 'rb') as file:
+            user_calendar_path = pickle.load(file)
+            messagebox.showinfo(message=f"User {user} was found")
+            
+            # Pass user info to the calendar screen
+            calendar_label.config(text=f"Welcome, {user}")
+            
+            # Show the calendar screen
+            show_frame(user_viewer_frame)
+    
+    except FileNotFoundError:
+        messagebox.showerror(message=f"User {user} not found. Please try again.")
     
 def check_event_list():
-    user = user_entry_events.get()
+    user = user_entry.get()
     current_dir = os.path.dirname(__file__)
     user_calendar_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_calendar.pkl')
     with open(user_calendar_path, 'rb') as file:
@@ -106,22 +99,27 @@ def check_event_list():
         print("No dates with events found")
         return None
     
-user_label = tk.Label(user_config_frame, text="Enter User:")
-user_label.pack(pady=10)
+user_label = tk.Label(user_config_frame, text="Enter User:", padx = 200, anchor = "center")
+user_label.pack(pady= 10)
 
 user_entry = tk.Entry(user_config_frame)
 user_entry.pack(pady=10)
 
-load_user_button = tk.Button(user_config_frame, text="Load User", command= load_user_calendar, fg="black", bg="lightgray")
+load_user_button = tk.Button(user_config_frame, text= "Load User", command= load_user_calendar, fg="black", bg="lightgray")
 load_user_button.pack(pady=20)
 
-uc_back_button = tk.Button(user_config_frame, text="Go back", command=lambda: show_frame(main_frame))
+uc_back_button = tk.Button(user_config_frame, text= "Go back", command=lambda: show_frame(main_frame))
 uc_back_button.pack(pady=10)
 
-user_entry_events = tk.Entry(user_config_frame)
-user_entry_events.pack(pady=10)
 
-check_user_events_button = tk.Button(user_config_frame, text="Print User Event List", command= check_event_list, fg="black", bg="lightgray")
+# ----- Calendar Screen Widgets -----
+calendar_label = tk.Label(user_viewer_frame, text="")
+calendar_label.pack(pady=20)
+
+back_button = tk.Button(user_viewer_frame, text="Back to Main", command=lambda: show_frame(main_frame))
+back_button.pack(pady=10)
+
+check_user_events_button = tk.Button(user_viewer_frame, text= "Print User Event List", command= check_event_list, fg="black", bg="lightgray")
 check_user_events_button.pack(pady=20)
 
 # Show the main screen initially

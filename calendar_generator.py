@@ -37,6 +37,7 @@ def save_calendar(calendar_template):
     calendar_path = os.path.join(current_dir, 'resources', 'calendar_template.pkl')
     with open(calendar_path, 'wb') as file:
         pickle.dump(calendar_template, file)
+        print("done")
 
 def load_calendar():
     # Get the directory of the current file (main script location)
