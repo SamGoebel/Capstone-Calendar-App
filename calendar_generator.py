@@ -78,15 +78,12 @@ def save_user_calendar(user_calendar, user):
     with open(user_calendar_path, 'wb') as file:
         pickle.dump(user_calendar, file)
 
-def load_user_calendar(user):
-    current_dir = os.path.dirname(__file__)
-    user_calendar_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_calendar.pkl')
-    with open(user_calendar_path, 'rb') as file:
-        return pickle.load(file)
+
 
 def add_events(calendar, date, event): 
     # loops through dict looking for date
     found_date = None
+    #print(calendar)
     x = 0
     for day_count in calendar:
         x = x + 1
@@ -172,8 +169,7 @@ def event_delete(gen, searched_event):
                 found_event = event
                 break
         
-        
-        # Output the result
+     # Output the result
         if found_event:
             gen.remove(found_event)
             print(f"\nEvent deleted")

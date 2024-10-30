@@ -2,7 +2,8 @@ import tkinter as tk
 import os, pickle, pprint
 from tkinter import messagebox, Frame
 from calendar_object import CalendarCreation
-from calendar_generator import generate_dates_with_events_until_2100, event_search, save_calendar, load_calendar, check_template, save_user_calendar, check_event_list, no_date_event_search, event_delete
+from calendar_generator import generate_dates_with_events_until_2100, event_search, save_calendar, load_calendar, check_template, save_user_calendar, no_date_event_search, event_delete
+from event_maker import adding_events, loading_events
 
 # Function to switch between frames (screens)
 def show_frame(frame):
@@ -17,8 +18,9 @@ root.geometry("1200x800")
 main_frame = tk.Frame(root)
 user_viewer_frame = tk.Frame(root)
 user_config_frame = tk.Frame(root)
+event_adder_frame = tk.Frame(root)
 
-for frame in (main_frame, user_viewer_frame, user_config_frame):
+for frame in (main_frame, user_viewer_frame, user_config_frame, event_adder_frame):
     frame.grid(row=0, column=0, sticky='nsew')
 
 # ----- Main Screen -----
@@ -51,12 +53,29 @@ def load_user_calendar():
             # Pass user info to the calendar screen
             calendar_label.config(text=f"Welcome, {user}")
             
+            
             # Show the calendar screen
             show_frame(user_viewer_frame)
+            
     
     except FileNotFoundError:
         messagebox.showerror(message=f"User {user} not found. Please try again.")
     
+    
+user_label = tk.Label(user_config_frame, text="Enter User:", padx = 200, anchor = "center")
+user_label.pack(pady= 10)
+
+user_entry = tk.Entry(user_config_frame)
+user_entry.pack(pady=10)
+
+load_user_button = tk.Button(user_config_frame, text= "Load User", command= load_user_calendar, fg="black", bg="lightgray")
+load_user_button.pack(pady=20)
+
+uc_back_button = tk.Button(user_config_frame, text= "Go back", command=lambda: show_frame(main_frame))
+uc_back_button.pack(pady=10)
+
+
+# ----- User Calendar Screen Widgets -----
 def check_event_list():
     user = user_entry.get()
     current_dir = os.path.dirname(__file__)
@@ -98,29 +117,51 @@ def check_event_list():
     else:
         print("No dates with events found")
         return None
-    
-user_label = tk.Label(user_config_frame, text="Enter User:", padx = 200, anchor = "center")
-user_label.pack(pady= 10)
 
-user_entry = tk.Entry(user_config_frame)
-user_entry.pack(pady=10)
-
-load_user_button = tk.Button(user_config_frame, text= "Load User", command= load_user_calendar, fg="black", bg="lightgray")
-load_user_button.pack(pady=20)
-
-uc_back_button = tk.Button(user_config_frame, text= "Go back", command=lambda: show_frame(main_frame))
-uc_back_button.pack(pady=10)
-
-
-# ----- Calendar Screen Widgets -----
 calendar_label = tk.Label(user_viewer_frame, text="")
 calendar_label.pack(pady=20)
 
 back_button = tk.Button(user_viewer_frame, text="Back to Main", command=lambda: show_frame(main_frame))
 back_button.pack(pady=10)
 
+add_event_screen_button = tk.Button(user_viewer_frame, text="Add Event", command=lambda: show_frame(event_adder_frame))
+add_event_screen_button.pack(pady=10) 
+
 check_user_events_button = tk.Button(user_viewer_frame, text= "Print User Event List", command= check_event_list, fg="black", bg="lightgray")
 check_user_events_button.pack(pady=20)
+
+
+# ----- Event Adder Screen -----
+
+def load_user_calendar_for_events():
+    user = user_entry.get()
+    current_dir = os.path.dirname(__file__)
+    user_calendar_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_calendar.pkl')
+    with open(user_calendar_path, 'rb') as file:
+        return pickle.load(file)
+
+
+space1 = tk.Label(event_adder_frame, text="") # Formats better 
+space1.pack(pady=20)
+
+event_date_label = tk.Label(event_adder_frame, text= "Enter Date (DD-MM-YYYY)")
+event_date_label.pack()
+event_date_entry = tk.Entry(event_adder_frame)
+event_date_entry.pack()
+
+space2 = tk.Label(event_adder_frame, text="")
+space2.pack(pady=10)
+
+event_name_label = tk.Label(event_adder_frame, text= "Enter Title")
+event_name_label.pack()
+event_name_entry = tk.Entry(event_adder_frame)
+event_name_entry.pack()
+
+add_event_button = tk.Button(event_adder_frame, text="Save Event", command=lambda: adding_events(load_user_calendar_for_events(), event_date_entry.get(), event_name_entry.get(), user_entry.get()))
+add_event_button.pack(pady=10)
+
+add_event_screen_button = tk.Button(event_adder_frame, text="Go Back", command=lambda: show_frame(user_viewer_frame))
+
 
 # Show the main screen initially
 show_frame(main_frame)

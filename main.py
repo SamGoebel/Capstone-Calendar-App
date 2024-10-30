@@ -1,6 +1,6 @@
 import calendar, event_maker
 from calendar_object import CalendarCreation
-from calendar_generator import generate_dates_with_events_until_2100, all_events, event_search, save_calendar, load_calendar, check_template, save_user_calendar, load_user_calendar, check_event_list, no_date_event_search, event_delete
+from calendar_generator import generate_dates_with_events_until_2100, all_events, event_search, save_calendar, load_calendar, check_template, save_user_calendar, load_user_calendar_for_events, check_event_list, no_date_event_search, event_delete
 
 
 cc = CalendarCreation()
@@ -17,7 +17,7 @@ calendar_check = load_calendar() # Loads calendar file to be used for other meth
 set_user = input("Enter name of user: ")
 
 #save_user_calendar(calendar_check, set_user)
-user_calendar = load_user_calendar(set_user)
+user_calendar = load_user_calendar_for_events(set_user)
 
 add_date = input("Enter Date (DD-MM-YYYY): ")
 add_event = input("Enter name of event: ")
