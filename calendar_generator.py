@@ -111,13 +111,6 @@ def load_event_list(user): # Might need to remove due to it being the same as lo
     with open(user_calendar_path, 'rb') as file:
         return pickle.load(file)
 
-def check_event_list(user):
-    obj = pickle.load(open("dates_with_events.pkl", "rb"))
-
-    with open(f"{user}_events_output.txt", "a") as f:
-         pprint.pprint(obj, stream=f)
-
-
 def event_search(gen, event_date, searched_event):
         
         event_days = gen
