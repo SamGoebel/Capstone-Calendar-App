@@ -1,5 +1,5 @@
 import tkinter as tk
-import os, pickle, pprint
+import os, pickle
 from tkinter import messagebox, Frame
 from calendar_object import CalendarCreation
 from calendar_generator import generate_dates_with_events_until_2100, event_search, save_calendar, load_calendar, check_template, save_user_calendar, no_date_event_search, event_delete, load_event_list
@@ -11,8 +11,16 @@ def show_frame(frame):
 
 # Create the main window
 root = tk.Tk()
-root.title("Calendar App Test")
-root.geometry("1200x800")
+root.title("Calendar App Project")
+
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+
+# Set window size to screen width and height (There if I need to change it)
+window_width = screen_width 
+window_height = screen_height
+root.geometry(f"{window_width}x{window_height}-2+0")
+
 
 # Create two frames (screens) in the same window
 main_frame = tk.Frame(root)
@@ -25,51 +33,75 @@ for frame in (main_frame, user_viewer_frame, user_config_frame, event_adder_fram
     frame.grid(row=0, column=0, sticky='nsew')
 
 # ----- Main Screen -----
-main_label = tk.Label(main_frame, text="This is the Main Screen")
+main_label = tk.Label(main_frame, text="Sam's Calendar App")
 main_label.pack(pady=20)
 
-# Buttons to go to other Screens
-uc_button = tk.Button(main_frame, text="Go to User Screen", command=lambda: show_frame(user_config_frame))
-uc_button.pack(pady=10)
+def user_grabber():
+    current_dir = os.path.dirname(__file__)
+    users_path = os.path.join(current_dir, 'users')
+    folders = [f.name for f in os.scandir(users_path) if f.is_dir()]
+    
+    return folders
+
+def update_user_dropdown():
+    show_frame(user_config_frame)
+    folder_names = user_grabber()
+    
+    if folder_names:  # If there are dates with events
+        user_select_dropdown.set(folder_names[0])  # Set default selection to the first event detail
+        user_select_menu['menu'].delete(0, 'end')  # Clear existing options in the dropdown
+
+        # Add new options with date and event details
+        for users in folder_names:
+            user_select_menu['menu'].add_command(label=users, command=tk._setit(user_select_dropdown, users))
+    else:
+        user_select_dropdown.set("No Users found")
 
 # Restore Template Function
 def template_maker():
     template = generate_dates_with_events_until_2100()
     save_calendar(template)
 
+# Startup Screen Buttons
+uc_button = tk.Button(main_frame, text="Go to User Screen", command= update_user_dropdown)
+uc_button.pack(pady=10)
+
 restore_template_button = tk.Button(main_frame, text= "Restore Calendar Template", command= template_maker, fg="black", bg="lightgray")
 restore_template_button.pack(pady=20)
 
-check_template_button = tk.Button(main_frame, text= "Check Calendar Template", command= check_template, fg="black", bg="lightgray")
+check_template_button = tk.Button(main_frame, text= "Check Status of Calendar Template", command= check_template, fg="black", bg="lightgray")
 check_template_button.pack(pady=20)
 
 # ----- User Config Screen -----
+
 def load_user_calendar():
-    user = user_entry.get()
+    user = user_select_dropdown.get()
     current_dir = os.path.dirname(__file__)
     user_calendar_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_calendar.pkl')
     try:
         with open(user_calendar_path, 'rb') as file:
             user_calendar_path = pickle.load(file)
-            messagebox.showinfo(message=f"User {user} was found")
+            #messagebox.showinfo(message=f"User found")
             
             # Pass user info to the calendar screen
             calendar_label.config(text=f"Welcome, {user}")
-            
-            
-            # Show the calendar screen
             show_frame(user_viewer_frame)
             
-    
     except FileNotFoundError:
-        messagebox.showerror(message=f"User {user} not found. Please try again.")
+        if user == "No Users Found":
+            messagebox.showerror(message=f"Please make a User.")
+        if user == "":
+            messagebox.showerror(message=f"Please select a User.")
+        else:
+            messagebox.showerror(message=f"User {user} not found. Please try again.")
     
     
-user_label = tk.Label(user_config_frame, text="Enter User:", padx = 200, anchor = "center")
-user_label.pack(pady= 10)
+user_select_dropdown = tk.StringVar(user_config_frame)
+user_select_dropdown.set("Select User")  # Initial dropdown text
+#event_edit_dropdown.trace_add("write", on_select_event)  # Trigger on dropdown selection change
 
-user_entry = tk.Entry(user_config_frame)
-user_entry.pack(pady=10)
+user_select_menu = tk.OptionMenu(user_config_frame, user_select_dropdown, "No Users Found")
+user_select_menu.pack(pady=20)
 
 load_user_button = tk.Button(user_config_frame, text= "Load User", command= load_user_calendar, fg="black", bg="lightgray")
 load_user_button.pack(pady=20)
@@ -77,10 +109,9 @@ load_user_button.pack(pady=20)
 uc_back_button = tk.Button(user_config_frame, text= "Go back", command=lambda: show_frame(main_frame))
 uc_back_button.pack(pady=10)
 
-
 # ----- User Calendar Screen Widgets -----
 def check_event_list():
-    user = user_entry.get()
+    user = user_select_dropdown.get()
     current_dir = os.path.dirname(__file__)
     user_calendar_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_calendar.pkl')
     with open(user_calendar_path, 'rb') as file:
@@ -118,33 +149,36 @@ def check_event_list():
         messagebox.showinfo(message = "Dates with Events are:\n" f"{combined_string}")
     else:
         print("No dates with events found")
-        return None
+        return 0
+
+def load_edit_screen():
+    show_frame(event_editor_frame)
+    update_dropdown()
+
 
 calendar_label = tk.Label(user_viewer_frame, text="")
 calendar_label.pack(pady=20)
 
-back_button = tk.Button(user_viewer_frame, text="Back to Main", command=lambda: show_frame(main_frame))
-back_button.pack(pady=10)
-
 add_event_screen_button = tk.Button(user_viewer_frame, text="Add Event", command=lambda: show_frame(event_adder_frame))
 add_event_screen_button.pack(pady=10)
 
-edit_event_screen_button = tk.Button(user_viewer_frame, text="Edit Event", command=lambda: show_frame(event_editor_frame))
+edit_event_screen_button = tk.Button(user_viewer_frame, text="Edit Event", command= load_edit_screen)
 edit_event_screen_button.pack(pady=10) 
 
 check_user_events_button = tk.Button(user_viewer_frame, text= "Print User Event List", command= check_event_list, fg="black", bg="lightgray")
 check_user_events_button.pack(pady=20)
 
+back_button = tk.Button(user_viewer_frame, text="Back to Main", command=lambda: show_frame(main_frame))
+back_button.pack(pady=10)
 
 # ----- Event Adder Screen -----
 
 def load_user_calendar_for_events():
-    user = user_entry.get()
+    user = user_select_dropdown.get()
     current_dir = os.path.dirname(__file__)
     user_calendar_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_calendar.pkl')
     with open(user_calendar_path, 'rb') as file:
         return pickle.load(file)
-
 
 space1 = tk.Label(event_adder_frame, text="") # Formats better 
 space1.pack(pady=20)
@@ -162,7 +196,7 @@ event_name_label.pack()
 event_name_entry = tk.Entry(event_adder_frame)
 event_name_entry.pack()
 
-add_event_button = tk.Button(event_adder_frame, text="Save Event", command=lambda: adding_events(load_user_calendar_for_events(), event_date_entry.get(), event_name_entry.get(), user_entry.get()))
+add_event_button = tk.Button(event_adder_frame, text="Save Event", command=lambda: adding_events(load_user_calendar_for_events(), event_date_entry.get(), event_name_entry.get(), user_select_dropdown.get()))
 add_event_button.pack(pady=10)
 
 add_event_back_button = tk.Button(event_adder_frame, text="Go Back", command=lambda: show_frame(user_viewer_frame))
@@ -174,7 +208,7 @@ space1 = tk.Label(event_editor_frame, text="") # Formats better
 space1.pack(pady=20)
 
 def load_event_dates_with_details():
-    user = user_entry.get()
+    user = user_select_dropdown.get()
     current_dir = os.path.dirname(__file__)
     user_calendar_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_calendar.pkl')
     
@@ -201,24 +235,34 @@ def update_dropdown():
     event_details = load_event_dates_with_details()
     
     if event_details:  # If there are dates with events
-        dropdown_var.set(event_details[0])  # Set default selection to the first event detail
+        event_edit_dropdown.set(event_details[0])  # Set default selection to the first event detail
         event_menu['menu'].delete(0, 'end')  # Clear existing options in the dropdown
 
         # Add new options with date and event details
         for detail in event_details:
-            event_menu['menu'].add_command(label=detail, command=tk._setit(dropdown_var, detail))
+            event_menu['menu'].add_command(label=detail, command=tk._setit(event_edit_dropdown, detail))
     else:
-        dropdown_var.set("No events found")
+        event_edit_dropdown.set("No events found")
 
-dropdown_var = tk.StringVar(event_editor_frame)
-dropdown_var.set("Select an Event")  # Initial dropdown text
+#Add ability to click the dropdown and delete an event from there
+def on_select_event(*args):
+    selected_event = event_edit_dropdown.get()
+    return selected_event
 
-event_menu = tk.OptionMenu(event_editor_frame, dropdown_var, "Select an Event")
+event_edit_dropdown = tk.StringVar(event_editor_frame)
+event_edit_dropdown.set("Select an Event")  # Initial dropdown text
+event_edit_dropdown.trace_add("write", on_select_event)  # Trigger on dropdown selection change
+
+event_menu = tk.OptionMenu(event_editor_frame, event_edit_dropdown, None)
 event_menu.pack(pady=20)
 
 # Button to load events into dropdown
-load_button = tk.Button(event_editor_frame, text="Load Events", command=update_dropdown)
-load_button.pack(pady=10)
+load_button = tk.Button(event_editor_frame, text="Refresh Events", command=update_dropdown)
+load_button.pack(pady=10) 
+
+edit_event_back_button = tk.Button(event_editor_frame, text="Go Back", command=lambda: show_frame(user_viewer_frame))
+edit_event_back_button.pack(pady=10)
+
 
 
 # Show the main screen initially
