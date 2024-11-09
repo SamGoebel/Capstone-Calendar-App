@@ -1,8 +1,8 @@
 import tkinter as tk
 import os, pickle
-from tkinter import messagebox, Frame
+from tkinter import messagebox, Frame, simpledialog
 from calendar_object import CalendarCreation
-from calendar_generator import generate_dates_with_events_until_2100, event_search, save_calendar, load_calendar, check_template, save_user_calendar, no_date_event_search, event_delete, load_event_list
+from calendar_generator import generate_dates_with_events_until_2100, event_search, save_calendar, load_calendar, check_template, save_user_calendar, no_date_event_search, delete_event
 from event_maker import adding_events, loading_events
 
 # Function to switch between frames (screens)
@@ -94,7 +94,20 @@ def load_user_calendar():
             messagebox.showerror(message=f"Please select a User.")
         else:
             messagebox.showerror(message=f"User {user} not found. Please try again.")
-    
+
+def new_user():
+    current_dir = os.path.dirname(__file__)
+    users_path = os.path.join(current_dir, 'users')
+    user_input = simpledialog.askstring("Input", "Enter name of user:")
+    if user_input:
+        try:
+            new_users_path = os.path.join(users_path, user_input)
+            os.makedirs(new_users_path, exist_ok=False)
+            messagebox.showinfo(None, "User Created")
+            save_user_calendar(load_calendar, user_input)
+            update_user_dropdown()
+        except FileExistsError:
+            messagebox.showinfo(None, "User already exists")
     
 user_select_dropdown = tk.StringVar(user_config_frame)
 user_select_dropdown.set("Select User")  # Initial dropdown text
@@ -102,6 +115,9 @@ user_select_dropdown.set("Select User")  # Initial dropdown text
 
 user_select_menu = tk.OptionMenu(user_config_frame, user_select_dropdown, "No Users Found")
 user_select_menu.pack(pady=20)
+
+add_user_button = tk.Button(user_config_frame, text= "Add User", command= new_user, fg="black", bg="lightgray")
+add_user_button.pack(pady=20)
 
 load_user_button = tk.Button(user_config_frame, text= "Load User", command= load_user_calendar, fg="black", bg="lightgray")
 load_user_button.pack(pady=20)
@@ -223,12 +239,11 @@ def load_event_dates_with_details():
             ]
             return event_details
     except FileNotFoundError:
-        tk.messagebox.showerror("Error", f"Calendar for user {user} not found.")
+        messagebox.showerror("Error", f"Calendar for user {user} not found.")
         return []
     except (KeyError, TypeError):
-        tk.messagebox.showerror("Error", "Invalid calendar format.")
+        messagebox.showerror("Error", "Invalid calendar format.")
         return []
-
 
 # Function to update the dropdown menu with dates and event details
 def update_dropdown():
@@ -244,17 +259,41 @@ def update_dropdown():
     else:
         event_edit_dropdown.set("No events found")
 
-#Add ability to click the dropdown and delete an event from there
-def on_select_event(*args):
-    selected_event = event_edit_dropdown.get()
-    return selected_event
-
 event_edit_dropdown = tk.StringVar(event_editor_frame)
 event_edit_dropdown.set("Select an Event")  # Initial dropdown text
-event_edit_dropdown.trace_add("write", on_select_event)  # Trigger on dropdown selection change
+#event_edit_dropdown.trace_add("write", event_edit_dropdown.get())  # Trigger on dropdown selection change
 
 event_menu = tk.OptionMenu(event_editor_frame, event_edit_dropdown, None)
 event_menu.pack(pady=20)
+
+def open_event_editor_window():
+    user = user_select_dropdown.get()
+    user_calendar_path = os.path.join(os.path.dirname(__file__), 'users', f'{user}', f'{user}_calendar.pkl')
+    selected_event = event_edit_dropdown.get()
+    event_text = selected_event.split(":", 1)[1].strip()
+    
+
+    # Create a new Toplevel window
+    event_editor_window = tk.Toplevel(root)
+    event_editor_window.title("Event Editor")
+    event_editor_window.geometry("500x300")
+    
+    # Add a label in the temporary window
+    label = tk.Label(event_editor_window, text="Edit your events here:")
+    label.pack(pady=20)
+
+    
+    # Add a close button in the temporary window
+    delete_event_button = tk.Button(event_editor_window, text="Delete Event", command= lambda: delete_event(user_calendar_path, event_text))
+    delete_event_button.pack(pady=5)
+    
+    
+    close_button = tk.Button(event_editor_window, text="Close Window", command=event_editor_window.destroy)
+    close_button.pack(pady=5)
+    
+
+edit_window_button = tk.Button(event_editor_frame, text = "Edit Selected Event", command = open_event_editor_window)
+edit_window_button.pack(pady=20)
 
 # Button to load events into dropdown
 load_button = tk.Button(event_editor_frame, text="Refresh Events", command=update_dropdown)

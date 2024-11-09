@@ -1,5 +1,6 @@
 import pickle, pprint, os
 from datetime import datetime, timedelta
+from tkinter import messagebox
 
 def generate_dates_with_events_until_2100():
     # Create an empty list to store the dates and events
@@ -83,13 +84,12 @@ def save_user_calendar(user_calendar, user):
 def add_events(calendar, date, event): 
     # loops through dict looking for date
     found_date = None
-    #print(calendar)
     x = 0
     for day_count in calendar:
         x = x + 1
         if day_count['date'] == date:
             found_date = x - 1
-            print("Date Found")
+            #print("Date Found")
             break
    
     calendar[found_date]['events'].append(event) # writes custom event to that date (doesn't remove the existing one)
@@ -148,25 +148,38 @@ def no_date_event_search(gen, searched_event):
         else:
             print(f"\nNo event found called '{search_event}'")
 
-def event_delete(gen, searched_event):
+def delete_event(pickle_path, event_to_delete):
+    # Load the pickle file
+    try:
+        with open(pickle_path, 'rb') as file:
+            calendar_data = pickle.load(file)
         
-        event_days = gen
-        search_event = searched_event
-        count = 0
-        found_event = None
-        
-        
-        for event in event_days:
-            count = count + 1
-            if search_event in event['events']:
-                found_event = event
-                break
-        
-     # Output the result
-        if found_event:
-            gen.remove(found_event)
-            print(f"\nEvent deleted")
-            return gen
+        # Ensure calendar_data is a list of dictionaries
+        if isinstance(calendar_data, list):
+            event_found = False
+            for entry in calendar_data:
+                # Check if 'events' is a list in the current dictionary entry
+                if 'events' in entry and isinstance(entry['events'], list):
+                    # Attempt to remove the event if it exists
+                    try:
+                        entry['events'].remove(event_to_delete)
+                        event_found = True
+                        messagebox.showinfo(None, f"Event deleted")
+                    except ValueError:
+                        # Skip if the event is not in this entry
+                        pass
+            
+            # If the event was found, save the modified data back to the pickle file
+            if event_found:
+                with open(pickle_path, 'wb') as file:
+                    pickle.dump(calendar_data, file)
+            else:
+                 messagebox(f"Event '{event_to_delete}' not found in any entry.")
         else:
-            print(f"\nNo event found called '{found_event}'")
+             messagebox("Invalid file format: expected a list of dictionaries.")
+    
+    except FileNotFoundError:
+         messagebox.showerror("Error:", f"File '{pickle_path}' not found.")
+    except (EOFError, pickle.UnpicklingError):
+         messagebox.showerror(None, f"Error loading pickle file. Ensure the file is valid.")
         
