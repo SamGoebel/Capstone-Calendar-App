@@ -2,7 +2,7 @@ import tkinter as tk
 import os, pickle
 from tkinter import messagebox, Frame, simpledialog
 from calendar_object import CalendarCreation
-from calendar_generator import generate_dates_with_events_until_2100, event_search, save_calendar, load_calendar, check_template, save_user_calendar, no_date_event_search, delete_event
+from calendar_generator import generate_dates_with_events_until_2100, event_search, save_calendar, load_calendar, check_template, save_user_calendar, no_date_event_search, delete_event, save_event_list
 from event_maker import adding_events, loading_events
 
 # Function to switch between frames (screens)
@@ -55,7 +55,7 @@ def update_user_dropdown():
         for users in folder_names:
             user_select_menu['menu'].add_command(label=users, command=tk._setit(user_select_dropdown, users))
     else:
-        user_select_dropdown.set("No Users found")
+        user_select_dropdown.set("No Users Found")
 
 # Restore Template Function
 def template_maker():
@@ -81,7 +81,6 @@ def load_user_calendar():
     try:
         with open(user_calendar_path, 'rb') as file:
             user_calendar_path = pickle.load(file)
-            #messagebox.showinfo(message=f"User found")
             
             # Pass user info to the calendar screen
             calendar_label.config(text=f"Welcome, {user}")
@@ -104,7 +103,7 @@ def new_user():
             new_users_path = os.path.join(users_path, user_input)
             os.makedirs(new_users_path, exist_ok=False)
             messagebox.showinfo(None, "User Created")
-            save_user_calendar(load_calendar, user_input)
+            save_user_calendar(load_calendar(), user_input)
             update_user_dropdown()
         except FileExistsError:
             messagebox.showinfo(None, "User already exists")
@@ -145,12 +144,8 @@ def check_event_list():
             if entry['events']:  # Check if the events list is not empty
                 date = entry['date']
                 events = ', '.join(entry['events'])
-                dates_with_real_events.append(f"{date} ({events})")
-            '''
-            # Stop once we have 100 dates with events
-            if len(dates_with_real_events) == 100:
-                break
-            '''
+                dates_with_real_events.append(f"{events} ({date})")
+        
         return dates_with_real_events
 
     # Get the dates with events
@@ -195,6 +190,13 @@ def load_user_calendar_for_events():
     user_calendar_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_calendar.pkl')
     with open(user_calendar_path, 'rb') as file:
         return pickle.load(file)
+    
+def add_event_transtion():
+    added_events = adding_events(load_user_calendar_for_events(), event_date_entry.get(), event_name_entry.get(), user_select_dropdown.get(), event_importance_entry.get(), event_notes_entry.get())
+    if added_events != 0:
+        save_event_list(added_events, user_select_dropdown.get())
+        show_frame(user_viewer_frame)
+    
 
 space1 = tk.Label(event_adder_frame, text="") # Formats better 
 space1.pack(pady=20)
@@ -212,7 +214,17 @@ event_name_label.pack()
 event_name_entry = tk.Entry(event_adder_frame)
 event_name_entry.pack()
 
-add_event_button = tk.Button(event_adder_frame, text="Save Event", command=lambda: adding_events(load_user_calendar_for_events(), event_date_entry.get(), event_name_entry.get(), user_select_dropdown.get()))
+event_importance_label = tk.Label(event_adder_frame, text= "Enter Importance Level")
+event_importance_label.pack()
+event_importance_entry = tk.Entry(event_adder_frame)
+event_importance_entry.pack()
+
+event_notes_label = tk.Label(event_adder_frame, text= "Enter Notes")
+event_notes_label.pack()
+event_notes_entry = tk.Entry(event_adder_frame)
+event_notes_entry.pack()
+
+add_event_button = tk.Button(event_adder_frame, text="Save Event", command= add_event_transtion)
 add_event_button.pack(pady=10)
 
 add_event_back_button = tk.Button(event_adder_frame, text="Go Back", command=lambda: show_frame(user_viewer_frame))
@@ -232,12 +244,13 @@ def load_event_dates_with_details():
         with open(user_calendar_path, 'rb') as file:
             calendar_data = pickle.load(file)  # Load list of date dictionaries
             
-            # Filter for dates with events and format "date: event1, event2"
+            # Filter for dates with events and format "date: event, event2, ect"
             event_details = [
-                f"{entry['date']}: {', '.join(entry['events'])}"
-                for entry in calendar_data if entry.get('events')
+            f"{entry['date']}: {', '.join(str(event) for event in entry['events'] if isinstance(event, str))}"
+            for entry in calendar_data if entry.get('events')
             ]
-            return event_details
+        return event_details
+
     except FileNotFoundError:
         messagebox.showerror("Error", f"Calendar for user {user} not found.")
         return []
@@ -272,11 +285,11 @@ def open_event_editor_window():
     selected_event = event_edit_dropdown.get()
     event_text = selected_event.split(":", 1)[1].strip()
     
-
     # Create a new Toplevel window
     event_editor_window = tk.Toplevel(root)
     event_editor_window.title("Event Editor")
     event_editor_window.geometry("500x300")
+    
     
     # Add a label in the temporary window
     label = tk.Label(event_editor_window, text="Edit your events here:")

@@ -44,3 +44,8 @@ event_delete(event_list, "Sonic")
 
 #print(date)
 
+'''
+obj = pickle.load(open("/Users/samgoebel/Projects/Capstone-Calendar-App/users/Sam/Sam_calendar.pkl", "rb"))
+with open("calendar_sam_test.txt", "a") as f:
+    pprint.pprint(obj, stream=f)
+'''
