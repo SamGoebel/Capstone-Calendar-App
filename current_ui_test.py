@@ -5,6 +5,7 @@ from calendar_object import CalendarCreation
 from calendar_generator import generate_dates_with_events_until_2100, event_search, save_calendar, load_calendar, check_template, save_user_calendar, no_date_event_search, delete_event, save_event_list
 from event_maker import adding_events, loading_events
 
+
 # Function to switch between frames (screens)
 def show_frame(frame):
     Frame.tkraise(frame)
