@@ -162,7 +162,7 @@ def no_date_event_search(gen, searched_event):
         else:
             print(f"\nNo event found called '{search_event}'")
 
-def delete_event(pickle_path, event_to_delete):
+def delete_event(pickle_path, event_to_delete, destroy_event_window):
     # Load the pickle file
     try:
         with open(pickle_path, 'rb') as file:
@@ -196,4 +196,4 @@ def delete_event(pickle_path, event_to_delete):
          messagebox.showerror("Error:", f"File '{pickle_path}' not found.")
     except (EOFError, pickle.UnpicklingError):
          messagebox.showerror(None, f"Error loading pickle file. Ensure the file is valid.")
-        
+    destroy_event_window.destroy()

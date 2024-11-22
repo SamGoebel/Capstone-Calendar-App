@@ -1,12 +1,11 @@
 import customtkinter as ctk
 import os, pickle
-from calendar_generator import generate_dates_with_events_until_2100, event_search, save_calendar, load_calendar, check_template, save_user_calendar, no_date_event_search, delete_event, save_event_list
-from event_maker import adding_events, loading_events
+from calendar_generator import generate_dates_with_events_until_2100, event_search, save_calendar, load_calendar, check_template, save_user_calendar, no_date_event_search, delete_event, save_event_list, add_events
 from calendar_object import CalendarCreation
 from customtkinter import CTkInputDialog
 
 def show_message(app, title, message):
-    # Create a new Toplevel window (like a popup)
+    # Create a new Toplevel window 
     message_box = ctk.CTkToplevel(app)
     
     if title != None:
@@ -22,8 +21,6 @@ def show_message(app, title, message):
 
     # Center the message box on the screen
     message_box.geometry(f"+{int(app.winfo_x() + app.winfo_width() // 2 - 150)}+{int(app.winfo_y() + app.winfo_height() // 2 - 100)}")
-
-# Example of how to use the show_message function
 
 
 # ----- Main Screen -----
@@ -82,7 +79,7 @@ def load_user_calendar(app, user, label):
 def new_user(app, user_drowndown):
     current_dir = os.path.dirname(__file__)
     users_path = os.path.join(current_dir, 'users')
-    user_input = CTkInputDialog(title = None, text= "Enter name of user:")
+    user_input = CTkInputDialog(title = "Name User", text= "Enter name of user:")
     the_user = user_input.get_input()
     if user_input:
         try:
@@ -95,3 +92,131 @@ def new_user(app, user_drowndown):
             show_message(app, "Error", "User Already Exists")
         except TypeError:
             return 0
+        
+
+# ----- User Screen -----
+
+def check_event_list(app, current_user):
+    user = current_user
+    current_dir = os.path.dirname(__file__)
+    user_calendar_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_calendar.pkl')
+    with open(user_calendar_path, 'rb') as file:
+        user_calendar = pickle.load(file)
+
+
+    #Function to grab dates with events
+    def get_dates_with_events(dates_with_events):
+        # List to store dates with events
+        dates_with_real_events = []
+        if dates_with_events == None:
+            return 0
+       
+        # Iterate over the dates and select those that have events
+        for entry in dates_with_events:
+            if entry['events']:  # Check if the events list is not empty
+                date = entry['date']
+                events = ', '.join(entry['events'])
+                dates_with_real_events.append(f"{events} ({date})")
+        
+        return dates_with_real_events
+
+    # Get the dates with events
+    dates_with_events = get_dates_with_events(user_calendar)
+
+    # Print the dates with events
+    if dates_with_events != 0:
+        entries_list = []
+        for entry in dates_with_events:
+            entries_list.append(str(entry))
+        combined_string = "\n".join(entries_list)
+        show_message(app, title = "Event List", message = "Dates with Events are:\n" f"{combined_string}")
+    else:
+        print("No dates with events found")
+        return 0
+    
+
+# ----- Event Adder Screen -----
+def load_user_calendar_for_events(current_user):
+    user = current_user
+    current_dir = os.path.dirname(__file__)
+    user_calendar_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_calendar.pkl')
+    with open(user_calendar_path, 'rb') as file:
+        return pickle.load(file)
+
+def adding_events(app, calendar, date, event, importance, notes, user):
+    
+    event_add = add_events(calendar, date, event, importance, notes)
+    if event_add != 0:
+        save_event_list(event_add, user)
+        app.show_frame("uviewer")
+
+    else:
+        return 0
+
+def load_event_dates_with_details(app, current_user):
+    user = current_user
+    current_dir = os.path.dirname(__file__)
+    user_calendar_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_calendar.pkl')
+    
+    try:
+        with open(user_calendar_path, 'rb') as file:
+            calendar_data = pickle.load(file)  # Load list of date dictionaries
+            
+            # Filter for dates with events and format "date: event, event2, ect"
+            event_details = [
+            f"{entry['date']}: {', '.join(str(event) for event in entry['events'] if isinstance(event, str))}"
+            for entry in calendar_data if entry.get('events')
+            ]
+        return event_details
+
+    except FileNotFoundError:
+        show_message(app, "Error", f"Calendar for user {user} not found.")
+        return []
+    except (KeyError, TypeError):
+        show_message(app, "Error", "Invalid calendar format.")
+        return []
+    
+def update_dropdown(app, current_user, event_dropdown):
+    
+    event_details = load_event_dates_with_details(app, current_user)
+    
+    if event_details:  # If there are dates with events
+        
+        event_dropdown.configure(values = event_details)
+        event_dropdown.set(event_details[0])  # Set default selection to the first event detail
+        
+
+        # Add new options with date and event details
+       # for detail in event_details:
+        #    event_menu['menu'].add_command(label=detail, command=ctk._setit(event_dropdown, detail))
+    else:
+        event_dropdown.configure(values = ["No Events Found"])
+        event_dropdown.set("No Events Found")
+    app.show_frame("eeditor")
+
+def open_event_editor_window(app, current_user, event):
+    user = current_user
+    user_calendar_path = os.path.join(os.path.dirname(__file__), 'users', f'{user}', f'{user}_calendar.pkl')
+    selected_event = event
+    event_text = selected_event.split(":", 1)[1].strip()
+    
+    # Create a new Toplevel window
+    event_editor_window = ctk.CTkToplevel(app)
+    event_editor_window.title("Edit Event")
+    event_editor_window.geometry("500x300")
+    
+    
+    # Add a label in the temporary window
+    label = ctk.CTkLabel(event_editor_window, text="Edit your events here:")
+    label.pack(pady=20)
+
+    
+    # Add a close button in the temporary window
+    delete_event_button = ctk.CTkButton(event_editor_window, text="Delete Event", command= lambda: delete_event(user_calendar_path, event_text, event_editor_window))
+    delete_event_button.pack(pady=5)
+    
+    
+    close_button = ctk.CTkButton(event_editor_window, text="Close Window", command=event_editor_window.destroy)
+    close_button.pack(pady=5)
+
+
