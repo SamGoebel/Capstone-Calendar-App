@@ -1,7 +1,7 @@
 import customtkinter as ctk
 from calendar_generator import check_template
 from calendar_object import CalendarCreation
-from frame_functions import update_user_dropdown, template_maker, load_user_calendar, new_user, check_event_list, load_user_calendar_for_events, adding_events, load_event_dates_with_details, update_dropdown, open_event_editor_window
+from frame_functions import update_user_dropdown, template_maker, load_user_calendar, new_user, check_event_list, load_user_calendar_for_events, adding_events, load_event_dates_with_details, update_dropdown, open_event_editor_window, delete_user_window
 
 # Initializing the app
 class App(ctk.CTk):
@@ -46,11 +46,14 @@ class HomeFrame(ctk.CTkFrame):
         button1 = ctk.CTkButton(self, text="Users", command= lambda: update_user_dropdown(app, controller.frames["uconfig"].dropdown))
         button1.pack(pady=10)
 
-        button2 = ctk.CTkButton(self, text="Check Template", command=check_template)
+        button2 = ctk.CTkButton(self, text="Check Template", command= lambda: check_template)
         button2.pack(pady=10)
 
-        button2 = ctk.CTkButton(self, text="Restore Template", command=template_maker)
-        button2.pack(pady=10)
+        button3 = ctk.CTkButton(self, text="Restore Template", command= lambda: template_maker)
+        button3.pack(pady=10)
+
+        test_ui = ctk.CTkButton(self, text="Test UI", command=check_template)
+        test_ui.pack(pady=10)
 
 
 class UserConfigFrame(ctk.CTkFrame):
@@ -75,6 +78,9 @@ class UserConfigFrame(ctk.CTkFrame):
 
         load_user_button = ctk.CTkButton(self, text="Load User", command=lambda: load_user_calendar(app, controller.frames["uconfig"].dropdown.get(), controller.frames["uviewer"].welcome_label))
         load_user_button.pack(pady=10)
+
+        load_user_button = ctk.CTkButton(self, text="Delete User", command=lambda: delete_user_window(app, controller.frames["uconfig"].dropdown.get(), controller.frames["uconfig"].dropdown))
+        load_user_button.pack(pady=10)
     
         button = ctk.CTkButton(self, text="Back to Home", command=lambda: controller.show_frame("home"))
         button.pack(pady=10)
@@ -95,7 +101,7 @@ class UserViewerFrame(ctk.CTkFrame):
         button = ctk.CTkButton(self, text="Print User Event List", command=lambda: check_event_list(app, controller.frames["uconfig"].dropdown.get()))
         button.pack(pady=10)
         
-        button = ctk.CTkButton(self, text="Back to Home", command=lambda: controller.show_frame("home"))
+        button = ctk.CTkButton(self, text="Go Back", command=lambda: controller.show_frame("uconfig"))
         button.pack(pady=10)
 
 class EventAdderFrame(ctk.CTkFrame):

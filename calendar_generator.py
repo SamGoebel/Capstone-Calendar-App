@@ -91,10 +91,10 @@ def add_events(event_calendar, date, event, importance, notes):
         return 0
     
     if found_date is not None:
-        print(f"Appending to event_calendar at index {found_date}")
+        #print(f"Appending to event_calendar at index {found_date}")
         event_calendar[found_date]['events'].append(event)
     
-    # Only append to importance and notes if they are not None or empty
+    # Only append to importance and notes if they are not none or empty
         if importance not in [None, '']:
             event_calendar[found_date]['importance'].append(importance)
         else:

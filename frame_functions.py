@@ -1,5 +1,5 @@
 import customtkinter as ctk
-import os, pickle
+import os, pickle, shutil
 from calendar_generator import generate_dates_with_events_until_2100, event_search, save_calendar, load_calendar, check_template, save_user_calendar, no_date_event_search, delete_event, save_event_list, add_events
 from calendar_object import CalendarCreation
 from customtkinter import CTkInputDialog
@@ -10,18 +10,20 @@ def show_message(app, title, message):
     
     if title != None:
         message_box.title(title)
+    else:
+         message_box.title("Success")
 
     # Add a label to show the message
     label = ctk.CTkLabel(message_box, text=message, font=("Arial", 16))
-    label.pack(padx=20, pady=20)
+    label.pack(ipady= 20)
 
     # Add a button to close the message box
     close_button = ctk.CTkButton(message_box, text="OK", command=message_box.destroy)
-    close_button.pack(pady=10)
+    close_button.pack(side = "bottom", pady= 5)
 
     # Center the message box on the screen
-    message_box.geometry(f"+{int(app.winfo_x() + app.winfo_width() // 2 - 150)}+{int(app.winfo_y() + app.winfo_height() // 2 - 100)}")
-
+   # message_box.geometry(f"+{int(app.winfo_x() + app.winfo_width() // 2 - 150)}+{int(app.winfo_y() + app.winfo_height() // 2 - 100)}")
+    message_box.geometry("200x110")
 
 # ----- Main Screen -----
 
@@ -76,23 +78,65 @@ def load_user_calendar(app, user, label):
             show_message(app, "Error", f"User {user} not found. Please try again.")
 
 
-def new_user(app, user_drowndown):
+def new_user(app, user_dropdown):
     current_dir = os.path.dirname(__file__)
     users_path = os.path.join(current_dir, 'users')
-    user_input = CTkInputDialog(title = "Name User", text= "Enter name of user:")
-    the_user = user_input.get_input()
-    if user_input:
-        try:
-            new_users_path = os.path.join(users_path, the_user)
-            os.makedirs(new_users_path, exist_ok=False)
-            show_message(app, None, "User Created")
-            save_user_calendar(load_calendar(), the_user)
-            update_user_dropdown(app, user_drowndown)
-        except FileExistsError:
-            show_message(app, "Error", "User Already Exists")
-        except TypeError:
-            return 0
-        
+    
+    user_maker_window = ctk.CTkToplevel(app)
+    user_maker_window.title("Add User Details")
+    user_maker_window.geometry("375x225")
+
+    enter_name = ctk.CTkEntry(user_maker_window, placeholder_text = "Enter Name")
+    enter_name.pack(pady= (20, 10))
+
+    color_name = ctk.CTkEntry(user_maker_window, placeholder_text = "Enter Color (Hex)")
+    color_name.pack(pady= 10)
+
+    edit_name = ctk.CTkEntry(user_maker_window, placeholder_text = "Image")
+    edit_name.pack(pady= 10)
+    
+    make_user_button = ctk.CTkButton(user_maker_window, text= "Make User", command = lambda: make_user(enter_name.get()))
+    make_user_button.pack(side = "bottom", pady= 20)
+    
+    def make_user(the_user):
+        if the_user:
+            try:
+                new_users_path = os.path.join(users_path, the_user)
+                os.makedirs(new_users_path, exist_ok=False)
+                show_message(app, "Success", "User Created")
+                save_user_calendar(load_calendar(), the_user)
+                update_user_dropdown(app, user_dropdown)
+                user_maker_window.destroy()
+            except FileExistsError:
+                show_message(app, "Error", "User Already Exists")
+            except TypeError:
+                return 0
+
+def delete_user_window(app, selected_user, user_dropdown):
+    current_dir = os.path.dirname(__file__)
+    users_path = os.path.join(current_dir, 'users', f"{selected_user}")
+    
+    user_deleter_window = ctk.CTkToplevel(app)
+    user_deleter_window.title(f"Delete User")
+    user_deleter_window.geometry("300x100")
+
+    delete_label = ctk.CTkLabel(user_deleter_window, text= f"Would you like to delete user {selected_user}?")
+    delete_label.pack(pady = 10)
+
+    delete_yes = ctk.CTkButton(user_deleter_window, text = "Yes", command= lambda: delete_user(users_path), width = 100) 
+    delete_yes.pack(side = "left", padx = 5)
+    delete_no = ctk.CTkButton(user_deleter_window, text = "No", command= lambda: user_deleter_window.destroy(), width = 100)
+    delete_no.pack(side = "right", padx = 5)
+    
+
+    def delete_user(path):
+        shutil.rmtree(path)
+        user_deleter_window.destroy()
+        show_message(app, "Success", "User Deleted")
+        update_user_dropdown(app, user_dropdown)
+        return 0
+
+
 
 # ----- User Screen -----
 
@@ -160,7 +204,7 @@ def load_event_dates_with_details(app, current_user):
     
     try:
         with open(user_calendar_path, 'rb') as file:
-            calendar_data = pickle.load(file)  # Load list of date dictionaries
+            calendar_data = pickle.load(file) 
             
             # Filter for dates with events and format "date: event, event2, ect"
             event_details = [
@@ -180,7 +224,7 @@ def update_dropdown(app, current_user, event_dropdown):
     
     event_details = load_event_dates_with_details(app, current_user)
     
-    if event_details:  # If there are dates with events
+    if event_details:  
         
         event_dropdown.configure(values = event_details)
         event_dropdown.set(event_details[0])  # Set default selection to the first event detail
@@ -194,11 +238,30 @@ def update_dropdown(app, current_user, event_dropdown):
         event_dropdown.set("No Events Found")
     app.show_frame("eeditor")
 
+def find_event_details(event_name, path):
+    
+    with open(path, 'rb') as file:
+        data = pickle.load(file)
+    
+    for entry in data:
+        if event_name in entry.get('events', []):  # Check if the event exists in the 'events' list
+            return entry  # Return the matching dictionary
+
+    return None
+
+
 def open_event_editor_window(app, current_user, event):
     user = current_user
     user_calendar_path = os.path.join(os.path.dirname(__file__), 'users', f'{user}', f'{user}_calendar.pkl')
     selected_event = event
     event_text = selected_event.split(":", 1)[1].strip()
+    
+    details = find_event_details(event_text, user_calendar_path)
+
+    event_text = details['events']
+    event_date = details['date']
+    event_importance = details['importance']
+    event_notes = details['notes']
     
     # Create a new Toplevel window
     event_editor_window = ctk.CTkToplevel(app)
@@ -210,11 +273,27 @@ def open_event_editor_window(app, current_user, event):
     label = ctk.CTkLabel(event_editor_window, text="Edit your events here:")
     label.pack(pady=20)
 
-    
+    edit_name = ctk.CTkEntry(event_editor_window, placeholder_text = "Name")
+    edit_name.pack(pady= 5)
+    edit_name.insert(0, event_text)
+
+    edit_date = ctk.CTkEntry(event_editor_window, placeholder_text= "Date")
+    edit_date.pack(pady= 5)
+    edit_date.insert(0, event_date)
+
+    edit_importance = ctk.CTkEntry(event_editor_window, placeholder_text = "Importance Level")
+    edit_importance.pack(pady= 5)
+    if event_importance != ['']:
+        edit_importance.insert(0, event_importance)
+
+    edit_notes = ctk.CTkEntry(event_editor_window, placeholder_text= "Notes")
+    edit_notes.pack(pady= 5)
+    if event_notes != ['']:
+        edit_notes.insert(0, event_notes)
+
     # Add a close button in the temporary window
     delete_event_button = ctk.CTkButton(event_editor_window, text="Delete Event", command= lambda: delete_event(user_calendar_path, event_text, event_editor_window))
     delete_event_button.pack(pady=5)
-    
     
     close_button = ctk.CTkButton(event_editor_window, text="Close Window", command=event_editor_window.destroy)
     close_button.pack(pady=5)
