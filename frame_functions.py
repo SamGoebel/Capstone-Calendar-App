@@ -3,6 +3,8 @@ import os, pickle, shutil
 from calendar_generator import generate_dates_with_events_until_2100, event_search, save_calendar, load_calendar, check_template, save_user_calendar, no_date_event_search, delete_event, save_event_list, add_events
 from calendar_object import CalendarCreation
 from customtkinter import CTkInputDialog
+from PIL import Image, ImageDraw
+from PyQt5.QtWidgets import QApplication, QFileDialog, QPushButton
 
 def show_message(app, title, message):
     # Create a new Toplevel window 
@@ -24,6 +26,79 @@ def show_message(app, title, message):
     # Center the message box on the screen
    # message_box.geometry(f"+{int(app.winfo_x() + app.winfo_width() // 2 - 150)}+{int(app.winfo_y() + app.winfo_height() // 2 - 100)}")
     message_box.geometry("200x110")
+
+def get_image(user):
+    current_dir = os.path.dirname(__file__)
+    user_image_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_image.png')
+    
+    image = Image.open(user_image_path)
+
+    size = min(image.size)  # Square size (smaller dimension)
+    image = image.resize((size, size))  # Resize to make it square
+    mask = Image.new("L", (size, size), 0)
+    draw = ImageDraw.Draw(mask)
+    draw.ellipse((0, 0, size, size), fill=255)  # Draw a circle on the mask
+
+
+    image.putalpha(mask)  # Apply the alpha mask to make it circular
+    
+    return ctk.CTkImage(dark_image = image, size=(40, 40))
+
+# Global variable to hold the selected image in memory
+selected_image = None
+
+# Function to open the file dialog and select an image
+def open_file_dialog():
+    """
+    Opens a file dialog to select an image and stores it in memory.
+    """
+    global selected_image
+    app = QApplication([])  # Ensure QApplication is created
+    file_path, _ = QFileDialog.getOpenFileName(None, "Select Image", "", "Images (*.png *.jpg *.jpeg *.gif)")
+
+    if file_path:
+        selected_image = Image.open(file_path)
+        print(f"Image loaded and stored in memory: {file_path}")
+    else:
+        print("No file selected.")
+    
+    app.quit()  # Quit QApplication when done
+
+# Function to save the image to the user's folder
+def save_image(user_name):
+    """
+    Saves the image stored in memory to the user's folder as 'user_image.png'.
+    """
+    global selected_image
+
+    if not selected_image:
+        print("No image loaded in memory, cannot save.")
+        return
+
+    # Define the user folder path based on the username
+    user_folder = os.path.join(os.getcwd(), "users", user_name)
+    
+    # Ensure the user folder exists
+    if not os.path.exists(user_folder):
+        os.makedirs(user_folder)
+
+    # Define the path to save the image
+    user_image_path = os.path.join(user_folder, f"{user_name}_image.png")
+
+    try:
+        # Save the image to the user folder
+        selected_image.save(user_image_path)
+        print(f"Image saved as {user_image_path}")
+    except Exception as e:
+        print(f"Error saving image: {e}")
+
+# Function to handle the "Select Image" button click
+def on_select_button_click():
+    open_file_dialog()
+
+# Function to handle the "Save Image" button click
+def on_save_button_click(user_name):
+    save_image(user_name)  # Pass the user name for saving the image
 
 # ----- Main Screen -----
 
@@ -57,7 +132,7 @@ def template_maker():
 
 # ----- User Config Screen -----
 
-def load_user_calendar(app, user, label):
+def load_user_calendar(app, user, label, image_label):
     
     current_dir = os.path.dirname(__file__)
     user_calendar_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_calendar.pkl')
@@ -67,6 +142,13 @@ def load_user_calendar(app, user, label):
             
             # Pass user info to the calendar screen
             label.configure(text=f"Welcome, {user}")
+            
+            try:
+                user_image = get_image(user)  # Load the image dynamically
+                image_label.configure(image=user_image, text="")  # Update the label with the image
+            except FileNotFoundError:
+                image_label.configure(image=None, text="")
+            
             app.show_frame("uviewer")
             
     except FileNotFoundError:
@@ -92,11 +174,12 @@ def new_user(app, user_dropdown):
     color_name = ctk.CTkEntry(user_maker_window, placeholder_text = "Enter Color (Hex)")
     color_name.pack(pady= 10)
 
-    edit_name = ctk.CTkEntry(user_maker_window, placeholder_text = "Image")
-    edit_name.pack(pady= 10)
+    upload_button = ctk.CTkButton(user_maker_window, text="Upload Image", command= lambda: open_file_dialog())
+    upload_button.pack(pady=10)
     
     make_user_button = ctk.CTkButton(user_maker_window, text= "Make User", command = lambda: make_user(enter_name.get()))
     make_user_button.pack(side = "bottom", pady= 20)
+    
     
     def make_user(the_user):
         if the_user:
@@ -105,6 +188,7 @@ def new_user(app, user_dropdown):
                 os.makedirs(new_users_path, exist_ok=False)
                 show_message(app, "Success", "User Created")
                 save_user_calendar(load_calendar(), the_user)
+                save_image(the_user)
                 update_user_dropdown(app, user_dropdown)
                 user_maker_window.destroy()
             except FileExistsError:
@@ -297,5 +381,83 @@ def open_event_editor_window(app, current_user, event):
     
     close_button = ctk.CTkButton(event_editor_window, text="Close Window", command=event_editor_window.destroy)
     close_button.pack(pady=5)
+
+# ----- Settings Screen -----
+
+def set_theme(theme):
+    ctk.set_appearance_mode(theme)
+    save_theme("config.txt", theme)
+    
+def save_theme(file_name, theme):
+    try:
+        with open(file_name, 'r') as file:
+            lines = file.readlines()
+    except FileNotFoundError:
+        # If the file doesn't exist, create a new one with the theme line.
+        lines = []
+    
+    updated = False
+    for i in range(len(lines)):
+        if lines[i].startswith("currentTheme:"):
+            lines[i] = f"currentTheme: {theme}\n"
+            updated = True
+            break
+
+    if not updated:
+        # If no "currentTheme:" line exists, add it.
+        lines.append(f"currentTheme: {theme}\n")
+    
+    with open(file_name, 'w') as file:
+        file.writelines(lines)
+    print(f"The theme '{theme}' has been set in {file_name}.")
+
+
+def get_current_theme(file_name):
+    try:
+        with open(file_name, 'r') as file:
+            for line in file:
+                if line.startswith("currentTheme:"):
+                    return line[len("currentTheme: "):].strip()
+    except FileNotFoundError:
+        pass
+    return None
+
+def set_color(color):
+    ctk.set_color_theme(color)
+    save_color("config.txt", color)
+    
+def save_color(file_name, color):
+    try:
+        with open(file_name, 'r') as file:
+            lines = file.readlines()
+    except FileNotFoundError:
+        # If the file doesn't exist, create a new one with the color line.
+        lines = []
+    
+    updated = False
+    for i in range(len(lines)):
+        if lines[i].startswith("currentColor:"):
+            lines[i] = f"currentColor: {color}\n"
+            updated = True
+            break
+
+    if not updated:
+        # If no "currentColor:" line exists, add it.
+        lines.append(f"currentColor: {color}\n")
+    
+    with open(file_name, 'w') as file:
+        file.writelines(lines)
+    print(f"The color '{color}' has been set in {file_name}.")
+
+
+def get_current_color(file_name):
+    try:
+        with open(file_name, 'r') as file:
+            for line in file:
+                if line.startswith("currentColor:"):
+                    return line[len("currentColor: "):].strip()
+    except FileNotFoundError:
+        pass
+    return None
 
 

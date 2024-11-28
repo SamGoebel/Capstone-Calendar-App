@@ -1,0 +1,2 @@
+currentTheme: Dark
+currentColor: blue
