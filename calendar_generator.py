@@ -37,11 +37,10 @@ calendar_template = generate_dates_with_events_until_2100()
 def save_calendar(calendar_template):
     
     current_dir = os.path.dirname(__file__)
-
     calendar_path = os.path.join(current_dir, 'resources', 'calendar_template.pkl')
+    
     with open(calendar_path, 'wb') as file:
         pickle.dump(calendar_template, file)
-       #print("done")
 
 def load_calendar():
     # Get the directory of the current file (main script location)
@@ -64,13 +63,21 @@ def check_template():
     with open("calendar_template_output.txt", "a") as f:
          pprint.pprint(obj, stream=f)
 
-def save_user_calendar(user_calendar, user):
+def save_user_calendar(user_calendar, user, color):
     current_dir = os.path.dirname(__file__)
     user_calendar_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_calendar.pkl')
-    
+    user_settings_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_settings.txt')
+
     with open(user_calendar_path, 'wb') as file:
         pickle.dump(user_calendar, file)
-
+    
+    s = open(user_settings_path, "w")
+    
+    if color != None:
+        s.write(f"color: {color}")
+    else:
+        s.write(f"color: black")
+    s.close()
 
 def add_events(event_calendar, date, event, importance, notes): 
     # loops through dict looking for date

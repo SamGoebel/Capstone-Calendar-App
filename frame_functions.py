@@ -2,7 +2,6 @@ import customtkinter as ctk
 import os, pickle, shutil
 from calendar_generator import generate_dates_with_events_until_2100, event_search, save_calendar, load_calendar, check_template, save_user_calendar, no_date_event_search, delete_event, save_event_list, add_events
 from calendar_object import CalendarCreation
-from customtkinter import CTkInputDialog
 from PIL import Image, ImageDraw
 from PyQt5.QtWidgets import QApplication, QFileDialog, QPushButton
 
@@ -23,6 +22,9 @@ def show_message(app, title, message):
     close_button = ctk.CTkButton(message_box, text="OK", command=message_box.destroy)
     close_button.pack(side = "bottom", pady= 5)
 
+    scroll_bar = ctk.CTkScrollbar(message_box)
+    scroll_bar.pack()
+
     # Center the message box on the screen
    # message_box.geometry(f"+{int(app.winfo_x() + app.winfo_width() // 2 - 150)}+{int(app.winfo_y() + app.winfo_height() // 2 - 100)}")
     message_box.geometry("200x110")
@@ -39,66 +41,97 @@ def get_image(user):
     draw = ImageDraw.Draw(mask)
     draw.ellipse((0, 0, size, size), fill=255)  # Draw a circle on the mask
 
-
     image.putalpha(mask)  # Apply the alpha mask to make it circular
     
     return ctk.CTkImage(dark_image = image, size=(40, 40))
 
-# Global variable to hold the selected image in memory
-selected_image = None
-
 # Function to open the file dialog and select an image
 def open_file_dialog():
-    """
-    Opens a file dialog to select an image and stores it in memory.
-    """
+    
     global selected_image
     app = QApplication([])  # Ensure QApplication is created
     file_path, _ = QFileDialog.getOpenFileName(None, "Select Image", "", "Images (*.png *.jpg *.jpeg *.gif)")
 
     if file_path:
         selected_image = Image.open(file_path)
-        print(f"Image loaded and stored in memory: {file_path}")
     else:
         print("No file selected.")
     
-    app.quit()  # Quit QApplication when done
+    app.quit()  
 
 # Function to save the image to the user's folder
 def save_image(user_name):
-    """
-    Saves the image stored in memory to the user's folder as 'user_image.png'.
-    """
+    
+    #Saves the image stored in memory to the user's folder as 'user_image.png'.
+    
     global selected_image
 
     if not selected_image:
-        print("No image loaded in memory, cannot save.")
         return
 
     # Define the user folder path based on the username
     user_folder = os.path.join(os.getcwd(), "users", user_name)
     
-    # Ensure the user folder exists
-    if not os.path.exists(user_folder):
-        os.makedirs(user_folder)
-
     # Define the path to save the image
     user_image_path = os.path.join(user_folder, f"{user_name}_image.png")
 
     try:
-        # Save the image to the user folder
         selected_image.save(user_image_path)
-        print(f"Image saved as {user_image_path}")
     except Exception as e:
         print(f"Error saving image: {e}")
 
-# Function to handle the "Select Image" button click
-def on_select_button_click():
-    open_file_dialog()
 
-# Function to handle the "Save Image" button click
-def on_save_button_click(user_name):
-    save_image(user_name)  # Pass the user name for saving the image
+def open_user_file_dialog():
+    global selected_file
+
+    # Create a QApplication instance (if not already running)
+    app = QApplication([])
+
+    # Open a file dialog to select the .pkl file
+    file_path, _ = QFileDialog.getOpenFileName(None, "Select Existing User Calendar", "", "Calendar (*.pkl)")
+
+    if file_path:
+        try:
+            # Load the pickle file and store its content
+            with open(file_path, 'rb') as file:
+                selected_file = pickle.load(file)
+            print(f"File loaded successfully: {file_path}")
+        except Exception as e:
+            print(f"Error loading file: {e}")
+    else:
+        print("No file selected.")
+    
+    app.quit()  # Close the QApplication
+
+
+def save_existing_user(user_name, color):
+    global selected_file
+
+    if not selected_file:
+        return
+
+    # Define the user folder path based on the username
+    user_folder = os.path.join(os.getcwd(), "users", user_name)
+    
+    # Define the path to save the image
+    user_calendar_path = os.path.join(user_folder, f"{user_name}_calendar.pkl")
+
+    try:
+        with open(user_calendar_path, 'wb') as file:
+            pickle.dump(selected_file, file)
+    
+    except Exception as e:
+        print(f"Error saving User: {e}")
+
+    user_settings_path = os.path.join(user_folder, f'{user_name}_settings.txt')
+    
+    s = open(user_settings_path, "w")
+    
+    if color != None:
+        s.write(f"color: {color}")
+    else:
+        s.write(f"color: black")
+    s.close()
 
 # ----- Main Screen -----
 
@@ -166,7 +199,9 @@ def new_user(app, user_dropdown):
     
     user_maker_window = ctk.CTkToplevel(app)
     user_maker_window.title("Add User Details")
-    user_maker_window.geometry("375x225")
+    user_maker_window.geometry("375x300")
+
+    selected_image = None
 
     enter_name = ctk.CTkEntry(user_maker_window, placeholder_text = "Enter Name")
     enter_name.pack(pady= (20, 10))
@@ -174,12 +209,14 @@ def new_user(app, user_dropdown):
     color_name = ctk.CTkEntry(user_maker_window, placeholder_text = "Enter Color (Hex)")
     color_name.pack(pady= 10)
 
-    upload_button = ctk.CTkButton(user_maker_window, text="Upload Image", command= lambda: open_file_dialog())
-    upload_button.pack(pady=10)
+    upload_image_button = ctk.CTkButton(user_maker_window, text="Upload Image", command= lambda: open_file_dialog())
+    upload_image_button.pack(pady=10)
+
+    upload_existing_user_button = ctk.CTkButton(user_maker_window, text="Upload Existing User", command= lambda: open_user_file_dialog())
+    upload_existing_user_button.pack(pady=10)
     
     make_user_button = ctk.CTkButton(user_maker_window, text= "Make User", command = lambda: make_user(enter_name.get()))
     make_user_button.pack(side = "bottom", pady= 20)
-    
     
     def make_user(the_user):
         if the_user:
@@ -187,8 +224,12 @@ def new_user(app, user_dropdown):
                 new_users_path = os.path.join(users_path, the_user)
                 os.makedirs(new_users_path, exist_ok=False)
                 show_message(app, "Success", "User Created")
-                save_user_calendar(load_calendar(), the_user)
-                save_image(the_user)
+                if selected_file == None:
+                    save_user_calendar(load_calendar(), the_user, color_name.get())
+                else:
+                    save_existing_user(the_user, color_name.get())
+                if selected_image != None:
+                    save_image(the_user)
                 update_user_dropdown(app, user_dropdown)
                 user_maker_window.destroy()
             except FileExistsError:
@@ -257,11 +298,27 @@ def check_event_list(app, current_user):
         for entry in dates_with_events:
             entries_list.append(str(entry))
         combined_string = "\n".join(entries_list)
-        show_message(app, title = "Event List", message = "Dates with Events are:\n" f"{combined_string}")
+        show_event_list(app, current_user, message = "Dates with Events are:\n" f"{combined_string}")
     else:
         print("No dates with events found")
         return 0
+
+def show_event_list(app, user, message):
     
+    event_box = ctk.CTkToplevel(app)
+    event_box.geometry("300x200")
+
+    event_box.title("Event List Window")
+    
+    scrollable_frame = ctk.CTkScrollableFrame(event_box, label_text= f"{user}'s Event List", width=280, height=150)
+    scrollable_frame.pack(pady=10, padx=10, fill="both", expand=True)
+    
+    for line in message.split("\n"):
+        label = ctk.CTkLabel(scrollable_frame, text=line, font=("Arial", 14), anchor="w")
+        label.pack(fill="x", padx=10, pady=2)
+    
+    close_button = ctk.CTkButton(event_box, text="OK", command=event_box.destroy)
+    close_button.pack(pady=10)
 
 # ----- Event Adder Screen -----
 def load_user_calendar_for_events(current_user):

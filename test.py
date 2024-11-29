@@ -1,31 +1,44 @@
-import tkinter as tk
 import customtkinter as ctk
-from PyQt5.QtWidgets import QApplication, QFileDialog
 
-def open_file_dialog():
-    # Ensure QApplication is created before creating any PyQt5 widgets
-    app = QApplication([])  # This is necessary to open the PyQt5 dialog
+def toggle_circle(canvas, condition):
+    # Delete all items from the canvas (clear it)
+    canvas.delete("all")
     
-    file_path, _ = QFileDialog.getOpenFileName(None, "Select Image", "", "Images (*.png *.jpg *.jpeg *.gif)")
-    if file_path:
-        print(f"Selected file: {file_path}")
+    # Draw the circle if the condition is True
+    if condition:
+        # Coordinates for the bounding box of the circle
+        x1, y1, x2, y2 = 50, 50, 250, 250  # Circle bounding box
+        hex_color = "#FF6347"  # Example hex color (Tomato color)
+        canvas.create_oval(x1, y1, x2, y2, fill=hex_color, outline="black", width=2)
+    else:
+        # Draw a message if the condition is False
+        canvas.create_text(150, 150, text="No Circle", font=("Arial", 16), fill="black")
+
+def toggle_condition(circle_condition):
+    # Toggle the condition (True <-> False)
+    circle_condition[0] = not circle_condition[0]
+
+def main():
+    # Create the main window
+    app = ctk.CTk()
+    app.geometry("400x400")
+
+    # Create a CTkCanvas widget
+    canvas = ctk.CTkCanvas(app, width=300, height=300)
+    canvas.pack(pady=20, padx=20)
     
-    app.quit()  # Properly quit the QApplication when done
+    # Initial condition (True to show circle, False to hide it)
+    circle_condition = [True]  # Use a list to allow mutability in lambda function
 
-class UserConfigFrame(ctk.CTkFrame):
-    def __init__(self, parent):
-        super().__init__(parent)
+    # Create the circle initially based on the condition
+    toggle_circle(canvas, circle_condition[0])
 
-        label = ctk.CTkLabel(self, text="Users", font=("Arial", 18))
-        label.pack(pady=10)
+    # Button to toggle the condition and circle visibility
+    toggle_button = ctk.CTkButton(app, text="Toggle Circle", command=lambda: [toggle_condition(circle_condition), toggle_circle(canvas, circle_condition[0])])
+    toggle_button.pack(pady=10)
 
-        # Create the button to open the file dialog
-        add_user_button = ctk.CTkButton(self, text="Add User", command=open_file_dialog)
-        add_user_button.pack(pady=10)
+    # Run the app
+    app.mainloop()
 
-# Create the customtkinter window
-root = ctk.CTk()
-user_config = UserConfigFrame(root)
-user_config.pack(padx=20, pady=20)
-
-root.mainloop()
+if __name__ == "__main__":
+    main()

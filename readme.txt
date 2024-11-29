@@ -1,1 +1,1 @@
-As of 11-8-2024, run current_ui_test.py to see the in_progress UI. 
+As of 11-28-2024, run new_ui_test.py to see the in_progress UI. 
