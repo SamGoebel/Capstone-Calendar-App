@@ -1,9 +1,9 @@
 import customtkinter as ctk
 import os, pickle, shutil
-from calendar_generator import generate_dates_with_events_until_2100, event_search, save_calendar, load_calendar, check_template, save_user_calendar, no_date_event_search, delete_event, save_event_list, add_events
-from calendar_object import CalendarCreation
+from calendar_generator import generate_dates_with_events_until_2100, event_search, save_calendar, load_calendar, save_user_calendar, no_date_event_search, delete_event, save_event_list, add_events
+from calendar_generator import generate_dates_with_events_until_2100_universal, save_universal_calendar, load_universal_calendar
 from PIL import Image, ImageDraw
-from PyQt5.QtWidgets import QApplication, QFileDialog, QPushButton
+from PyQt5.QtWidgets import QApplication, QFileDialog
 
 def show_message(app, title, message):
     # Create a new Toplevel window 
@@ -43,7 +43,7 @@ def get_image(user):
 
     image.putalpha(mask)  # Apply the alpha mask to make it circular
     
-    return ctk.CTkImage(dark_image = image, size=(40, 40))
+    return ctk.CTkImage(dark_image = image, size=(60, 60))
 
 # Function to open the file dialog and select an image
 def open_file_dialog():
@@ -162,6 +162,9 @@ def template_maker():
     template = generate_dates_with_events_until_2100()
     save_calendar(template)
 
+def universal_template_maker():
+    template = generate_dates_with_events_until_2100_universal()
+    save_universal_calendar(template)
 
 # ----- User Config Screen -----
 
@@ -202,6 +205,7 @@ def new_user(app, user_dropdown):
     user_maker_window.geometry("375x300")
 
     selected_image = None
+    selected_file = None
 
     enter_name = ctk.CTkEntry(user_maker_window, placeholder_text = "Enter Name")
     enter_name.pack(pady= (20, 10))
@@ -369,11 +373,7 @@ def update_dropdown(app, current_user, event_dropdown):
         
         event_dropdown.configure(values = event_details)
         event_dropdown.set(event_details[0])  # Set default selection to the first event detail
-        
 
-        # Add new options with date and event details
-       # for detail in event_details:
-        #    event_menu['menu'].add_command(label=detail, command=ctk._setit(event_dropdown, detail))
     else:
         event_dropdown.configure(values = ["No Events Found"])
         event_dropdown.set("No Events Found")
@@ -407,7 +407,7 @@ def open_event_editor_window(app, current_user, event):
     # Create a new Toplevel window
     event_editor_window = ctk.CTkToplevel(app)
     event_editor_window.title("Edit Event")
-    event_editor_window.geometry("500x300")
+    event_editor_window.geometry("500x400")
     
     
     # Add a label in the temporary window
@@ -432,7 +432,10 @@ def open_event_editor_window(app, current_user, event):
     if event_notes != ['']:
         edit_notes.insert(0, event_notes)
 
-    # Add a close button in the temporary window
+
+    save_event_button = ctk.CTkButton(event_editor_window, text="Save Event", command= lambda: delete_event(user_calendar_path, event_text, event_editor_window))
+    save_event_button.pack(pady=5)
+    
     delete_event_button = ctk.CTkButton(event_editor_window, text="Delete Event", command= lambda: delete_event(user_calendar_path, event_text, event_editor_window))
     delete_event_button.pack(pady=5)
     

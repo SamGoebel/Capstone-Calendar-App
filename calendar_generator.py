@@ -1,7 +1,7 @@
 import pickle, pprint, os
 from datetime import datetime, timedelta
 from tkinter import messagebox
-
+from collections import defaultdict
 
 def generate_dates_with_events_until_2100():
     # Create an empty list to store the dates and events
@@ -24,7 +24,6 @@ def generate_dates_with_events_until_2100():
             'importance': []
         }
         
-        # Append the date entry to the array
         date_array.append(date_entry)
         
         # Move to the next day
@@ -32,31 +31,73 @@ def generate_dates_with_events_until_2100():
     
     return date_array
 
-calendar_template = generate_dates_with_events_until_2100()
-
 def save_calendar(calendar_template):
     
     current_dir = os.path.dirname(__file__)
-    calendar_path = os.path.join(current_dir, 'resources', 'calendar_template.pkl')
+    calendar_path = os.path.join(current_dir, 'resources', 'templates', 'calendar_template.pkl')
     
     with open(calendar_path, 'wb') as file:
         pickle.dump(calendar_template, file)
 
 def load_calendar():
-    # Get the directory of the current file (main script location)
     current_dir = os.path.dirname(__file__)
+    calendar_path = os.path.join(current_dir, 'resources', 'templates', 'calendar_template.pkl')
+    
+    with open(calendar_path, 'rb') as file:
+        return pickle.load(file)
+    
+def generate_dates_with_events_until_2100_universal():
+    # Create an empty list to store the dates and events
+    date_array = []
+    
+    # Get today's date
+    start_date = datetime(2024, 1, 1)
+    
+    # Set the end date to December 31, 2100
+    end_date = datetime(2100, 12, 31)
+    
+    # Loop through each day from the start date to the end date
+    current_date = start_date
+    while current_date <= end_date:
+        # Create a dictionary for each date with an empty list for events
+        date_entry = {
+            'date': current_date.strftime('%m-%d-%Y'),
+            'events': [],
+            'notes': [],
+            'importance': [],
+            'present_users': []
+        }
+        
+        # Append the date entry to the array
+        date_array.append(date_entry)
+        
+        # Move to the next day
+        current_date += timedelta(days=1)
+       
+    return date_array
 
-    # Build the path to the calendar_template.pkl in the resources folder
-    calendar_path = os.path.join(current_dir, 'resources', 'calendar_template.pkl')
-    # Open and load the pickle file
+#calendar_template_u = generate_dates_with_events_until_2100_universal()
+
+def save_universal_calendar(calendar_template_u):
+    
+    current_dir = os.path.dirname(__file__)
+    calendar_path = os.path.join(current_dir, 'resources', 'templates', 'calendar_template_universal.pkl')
+    
+    with open(calendar_path, 'wb') as file:
+        pickle.dump(calendar_template_u, file)
+        print("calendar saved")
+
+def load_universal_calendar():
+    
+    current_dir = os.path.dirname(__file__)
+    calendar_path = os.path.join(current_dir, 'resources', 'templates', 'calendar_template_universal.pkl')
+
     with open(calendar_path, 'rb') as file:
         return pickle.load(file)
 
-
 def check_template():
-    
     current_dir = os.path.dirname(__file__)
-    calendar_path = os.path.join(current_dir, 'resources', 'calendar_template.pkl')
+    calendar_path = os.path.join(current_dir, 'resources', 'templates', 'calendar_template.pkl')
     
     obj = pickle.load(open(calendar_path, "rb"))
 
@@ -120,6 +161,7 @@ def save_event_list(gen, user):
     event_adder = gen   
     current_dir = os.path.dirname(__file__)
     user_calendar_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_calendar.pkl')
+    
     with open(user_calendar_path, 'wb') as file:
         pickle.dump(event_adder, file)
     messagebox.showinfo(None, "Event Saved")
@@ -204,3 +246,4 @@ def delete_event(pickle_path, event_to_delete, destroy_event_window):
     except (EOFError, pickle.UnpicklingError):
          messagebox.showerror(None, f"Error loading pickle file. Ensure the file is valid.")
     destroy_event_window.destroy()
+
