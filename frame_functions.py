@@ -1,5 +1,5 @@
 import customtkinter as ctk
-import os, pickle, shutil
+import os, pickle, shutil, string
 from calendar_generator import generate_dates_with_events_until_2100, event_search, save_calendar, load_calendar, save_user_calendar, no_date_event_search, delete_event, save_event_list, add_events, edit_events
 from calendar_generator import generate_dates_with_events_until_2100_universal, save_universal_calendar, load_universal_calendar
 from PIL import Image, ImageDraw
@@ -61,6 +61,7 @@ def get_image(user):
 
         image.putalpha(mask)  # Apply the alpha mask to make it circular
         
+
         return ctk.CTkImage(dark_image = image, size=(60, 60))
 
 
@@ -73,7 +74,7 @@ def open_file_dialog():
 
     if file_path:
         selected_image = Image.open(file_path)
-        print("image selected")
+        print("Image selected")
         return selected_image
     else:
         print("No file selected.")
@@ -84,9 +85,8 @@ def open_file_dialog():
 # Function to save the image to the user's folder
 def save_image(user_name):
     
-    #Saves the image stored in memory to the user's folder as 'user_image.png'.
-    
     global selected_image
+    #Saves the image stored in memory to the user's folder as 'user_image.png'.
 
     if not selected_image:
         return
@@ -99,6 +99,7 @@ def save_image(user_name):
 
     try:
         selected_image.save(user_image_path)
+        selected_image = None
     except Exception as e:
         print(f"Error saving image: {e}")
 
@@ -174,6 +175,7 @@ def update_user_dropdown(app, user_select_dropdown):
     if folder_names:  # If there are names returned
         user_select_dropdown.configure(values=folder_names)  # Set the dropdown options
         user_select_dropdown.set(folder_names[0])  # Set the default selection to the first name
+        
     else:
         user_select_dropdown.configure(values=["No Users Found"])
         user_select_dropdown.set("No Users Found")
@@ -228,7 +230,6 @@ def new_user(app, user_dropdown):
     user_maker_window.title("Add User Details")
     user_maker_window.geometry("375x300")
 
-    #selected_image = None
     selected_file = None
 
     enter_name = ctk.CTkEntry(user_maker_window, placeholder_text = "Enter Name")
@@ -256,8 +257,8 @@ def new_user(app, user_dropdown):
                     save_user_calendar(load_calendar(), the_user, color_name.get())
                 else:
                     save_existing_user(the_user, color_name.get())
-                if selected_image != None:
-                    save_image(the_user)
+               # if selected_image != None:
+                save_image(the_user)
                 update_user_dropdown(app, user_dropdown)
                 user_maker_window.destroy()
             except FileExistsError:
@@ -419,8 +420,7 @@ def find_event_details(event_name, path):
         data = pickle.load(file)
     
     for entry in data:
-        print(entry.get('events', []))
-        if event_name in entry.get('events', []):  # Check if the event exists in the 'events' list
+        if event_name in entry.get('events', []): 
             return entry  # Return the matching dictionary
 
     return None
@@ -431,7 +431,7 @@ def open_event_editor_window(app, current_user, event):
     user_calendar_path = os.path.join(os.path.dirname(__file__), 'users', f'{user}', f'{user}_calendar.pkl')
     selected_event = event
     user_calendar =  load_user_calendar_for_events(app.frames["uconfig"].dropdown.get())
-    split_event_text = selected_event.split(":", 1)[1].strip()
+    split_event_text = selected_event.split(":", 1)[1].strip() # Grabs Event Name from previously made combined string
     
     details = find_event_details(split_event_text, user_calendar_path)
 
@@ -439,19 +439,20 @@ def open_event_editor_window(app, current_user, event):
     event_date = details['date']
     event_importance = details['importance']
     event_notes = details['notes']
+
+    event_text_str = str(event_text)
+    event_text_str = event_text_str.translate(str.maketrans('', '', string.punctuation))  # Remove punctuation
     
-    # Create a new Toplevel window
     event_editor_window = ctk.CTkToplevel(app)
     event_editor_window.title("Edit Event")
     event_editor_window.geometry("500x400")
-    
-    # Add a label in the temporary window
+
     label = ctk.CTkLabel(event_editor_window, text="Edit your events here:")
     label.pack(pady=20)
 
     edit_name = ctk.CTkEntry(event_editor_window, placeholder_text = "Name")
     edit_name.pack(pady= 5)
-    edit_name.insert(0, event_text)
+    edit_name.insert(0, event_text_str)
 
     edit_date = ctk.CTkEntry(event_editor_window, placeholder_text= "Date")
     edit_date.pack(pady= 5)
@@ -543,7 +544,6 @@ def save_color(file_name, color):
     with open(file_name, 'w') as file:
         file.writelines(lines)
     print(f"The color '{color}' has been set in {file_name}.")
-
 
 def get_current_color(file_name):
     try:

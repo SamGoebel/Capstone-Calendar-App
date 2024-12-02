@@ -1,5 +1,4 @@
 import customtkinter as ctk
-from calendar_generator import check_template
 from frame_functions import update_user_dropdown, template_maker, load_user_calendar, new_user, check_event_list, load_user_calendar_for_events, adding_events
 from frame_functions import update_dropdown, open_event_editor_window, delete_user_window, set_theme, get_current_theme, set_color, get_current_color, universal_template_maker
 from calendar_screen_functions import load_calendar_data, get_date_range, update_calendar, prev_month, next_month, reset_calendar, calendar_transition
@@ -46,46 +45,46 @@ class App(ctk.CTk):
 class HomeFrame(ctk.CTkFrame):
     def __init__(self, parent, controller):
         super().__init__(parent)
-        label = ctk.CTkLabel(self, text="Sam's Calendar App", font=("Arial", 18))
-        label.pack(pady=20)
+        label = ctk.CTkLabel(self, text="Sam's Calendar App", font=("Arial", 32))
+        label.pack(pady=40)
 
-        user_select_button = ctk.CTkButton(self, text="Select User", command= lambda: update_user_dropdown(app, controller.frames["uconfig"].dropdown))
-        user_select_button.pack(pady=10)
+        user_select_button = ctk.CTkButton(self, font=("Arial", 20), width = 200, height = 60, text="Select User", command= lambda: update_user_dropdown(app, controller.frames["uconfig"].dropdown))
+        user_select_button.pack(pady=20)
 
-        calendar = ctk.CTkButton(self, text="Calendar", command= lambda: calendar_transition(app))
-        calendar.pack(pady=10)
+        calendar = ctk.CTkButton(self, font=("Arial", 20), width = 200, height = 60, text="Calendar", command= lambda: calendar_transition(app))
+        calendar.pack(pady=20)
 
-        settings = ctk.CTkButton(self, text="Settings", command= lambda: controller.show_frame("settings"))
-        settings.pack(pady=10)
+        settings = ctk.CTkButton(self, font=("Arial", 20), width = 200, height = 60, text="Settings", command= lambda: controller.show_frame("settings"))
+        settings.pack(pady=20)
 
-        quit = ctk.CTkButton(self, text="Quit", command= lambda: app.destroy())
-        quit.pack(pady=10)
+        quit = ctk.CTkButton(self, font=("Arial", 20), width = 200, height = 60, text="Quit", compound= 'bottom', command= lambda: app.destroy())
+        quit.pack(pady=(20,10))
 
 
 class UserConfigFrame(ctk.CTkFrame):
     def __init__(self, parent, controller):
         super().__init__(parent)
-        label = ctk.CTkLabel(self, text="Users", font=("Arial", 18))
-        label.pack(pady=10)
+        label = ctk.CTkLabel(self, text="Users Menu", font=("Arial", 28))
+        label.pack(pady=(20,5))
 
-        self.label = ctk.CTkLabel(self, text="Select an option:", font=("Arial", 16))
+        self.label = ctk.CTkLabel(self, font=("Arial", 20), width = 200, height = 50, text="Select an option:")
         self.label.pack(pady=20)
 
-        add_user_button = ctk.CTkButton(self, text="Add User", command=lambda: new_user(app, controller.frames["uconfig"].dropdown))
-        add_user_button.pack(pady=10)
-
-        self.dropdown = ctk.CTkOptionMenu(self, dynamic_resizing = False)
-        self.dropdown.pack(pady=(20, 10))
+        self.dropdown = ctk.CTkOptionMenu(self, font=("Arial", 20), width = 200, height = 50, dynamic_resizing = False)
+        self.dropdown.pack(pady=(15))
         self.dropdown.set("No Users Found")
 
-        load_user_button = ctk.CTkButton(self, text="Load User", command=lambda: load_user_calendar(app, controller.frames["uconfig"].dropdown.get(), controller.frames["uviewer"].welcome_label, controller.frames["uviewer"].image_label))
-        load_user_button.pack(pady=10)
+        add_user_button = ctk.CTkButton(self, font=("Arial", 20), width = 200, height = 50, text="Add User", command=lambda: new_user(app, controller.frames["uconfig"].dropdown))
+        add_user_button.pack(pady=15)
 
-        load_user_button = ctk.CTkButton(self, text="Delete User", command=lambda: delete_user_window(app, controller.frames["uconfig"].dropdown.get(), controller.frames["uconfig"].dropdown))
-        load_user_button.pack(pady=10)
+        load_user_button = ctk.CTkButton(self, font=("Arial", 20), width = 200, height = 50, text="Load User", command=lambda: load_user_calendar(app, controller.frames["uconfig"].dropdown.get(), controller.frames["uviewer"].welcome_label, controller.frames["uviewer"].image_label))
+        load_user_button.pack(pady=15)
+
+        load_user_button = ctk.CTkButton(self, font=("Arial", 20), width = 200, height = 50, text="Delete User", command=lambda: delete_user_window(app, controller.frames["uconfig"].dropdown.get(), controller.frames["uconfig"].dropdown))
+        load_user_button.pack(pady=15)
     
-        button = ctk.CTkButton(self, text="Back to Home", command=lambda: controller.show_frame("home"))
-        button.pack(pady=10)
+        button = ctk.CTkButton(self, font=("Arial", 20), width = 200, height = 50, text="Back to Home", command=lambda: controller.show_frame("home"))
+        button.pack(pady=(15,0))
 
 
 class UserViewerFrame(ctk.CTkFrame):

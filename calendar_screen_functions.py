@@ -98,23 +98,40 @@ def on_date_selected(self, day, month, year):
 
     popup = ctk.CTkToplevel(self)
     popup.title(f"Events on {date_str}")
-    popup.geometry("400x300")  
+    popup.geometry("400x400")  
 
     # Scrollable frame for events
-    scrollable_frame = ctk.CTkScrollableFrame(popup)
+    scrollable_frame = ctk.CTkFrame(popup)
     scrollable_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
     # Header for the popup
     header = ctk.CTkLabel(scrollable_frame, text=f"Events on {date_str}:", font=("Arial", 18))
-    header.pack(pady=(10, 15))
+    header.pack(pady=(10, 5))
 
     # Display events and their corresponding users in the scrollable frame
     if events:
+    # Create a Textbox for displaying events and users
+        event_textbox = ctk.CTkTextbox(scrollable_frame, wrap="word", font=("Arial", 16), height=10)
+    
+    # Insert each event and user into the Textbox
         for event, user in zip(events, users):
-            event_label = ctk.CTkLabel(scrollable_frame, text=f"{event} ({user})", font=("Arial", 16))
-            event_label.pack(anchor="w", padx=10, pady=2)
+            event_textbox.insert("end", f"{event} ({user})\n\n")  # Add a newline after each entry
+    
+    # Create a Scrollbar
+        scrollbar = ctk.CTkScrollbar(scrollable_frame, command=event_textbox.yview)
+        scrollbar.pack(side="right", fill="y")
+
+    # Link the Textbox to the Scrollbar
+        event_textbox.configure(yscrollcommand=scrollbar.set)
+
+    # Configure the Textbox to be read-only
+        event_textbox.configure(state="disabled")
+    
+    # Add padding and packing to fit nicely
+        event_textbox.pack(fill="both", padx=10, pady=4, expand=True)
+
     else:
-        no_events_label = ctk.CTkLabel(scrollable_frame, text="No Events Present", font=("Arial", 16))
+        no_events_label = ctk.CTkLabel(scrollable_frame, text="No Events Present", font=("Arial", 18))
         no_events_label.pack(pady=10)
 
     # Create a frame for the close button (to keep it at the bottom of the window)
@@ -138,7 +155,7 @@ def universal_calendar_data(users_folder, output_file):
         'importance': [], 
         'notes': [], 
         'present_users': [],
-        'some_users': []  # New field to store users who have events on that date
+        'some_users': []  
     })
 
     # Walk through the 'users' directory and process all .pkl files
