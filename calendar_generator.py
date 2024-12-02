@@ -139,7 +139,6 @@ def add_events(event_calendar, date, event, importance, notes):
         return 0
     
     if found_date is not None:
-        #print(f"Appending to event_calendar at index {found_date}")
         event_calendar[found_date]['events'].append(event)
     
     # Only append to importance and notes if they are not none or empty
@@ -158,8 +157,6 @@ def add_events(event_calendar, date, event, importance, notes):
     return event_calendar
 
 def edit_events(event_calendar, old_date, new_date, new_event, new_importance, new_notes, event_window):
-
-   # print(new_event)
     try:
         # Find the old date in the calendar
         old_date_index = None
@@ -189,7 +186,6 @@ def edit_events(event_calendar, old_date, new_date, new_event, new_importance, n
             if new_date_index is not None:
                 # Overwrite the new date's data
                 event_calendar[new_date_index]['events'] = new_event 
-                print(event_calendar[new_date_index]['events'])
                 event_calendar[new_date_index]['importance'] = new_importance 
                 event_calendar[new_date_index]['notes'] = new_notes 
 
@@ -225,12 +221,7 @@ def save_event_list(gen, user):
     event_adder = gen   
     current_dir = os.path.dirname(__file__)
     user_calendar_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_calendar.pkl')
-    
-    x = 0
-    for x in range(30):
-        print(event_adder[x])
-        x = x + 1 
-    
+
     with open(user_calendar_path, 'wb') as file:
         pickle.dump(event_adder, file)
     messagebox.showinfo(None, "Event Saved")
@@ -280,9 +271,9 @@ def no_date_event_search(gen, searched_event):
         else:
             print(f"\nNo event found called '{search_event}'")
 
-def delete_event(pickle_path, event_to_delete, destroy_event_window):
+def delete_event(app, user, pickle_path, event_to_delete, destroy_event_window):
+    from frame_functions import update_dropdown
     # Load the pickle file
-    print(type(event_to_delete))
     try:
         with open(pickle_path, 'rb') as file:
             calendar_data = pickle.load(file)
@@ -307,13 +298,14 @@ def delete_event(pickle_path, event_to_delete, destroy_event_window):
                 with open(pickle_path, 'wb') as file:
                     pickle.dump(calendar_data, file)
             else:
-                 messagebox(f"Event '{event_to_delete}' not found in any entry.")
+                 messagebox.showinfo(None, f"Event '{event_to_delete}' not found in any entry.")
         else:
-             messagebox("Invalid file format: expected a list of dictionaries.")
+             messagebox.showinfo(None, "Invalid file format: expected a list of dictionaries.")
     
     except FileNotFoundError:
          messagebox.showerror("Error:", f"File '{pickle_path}' not found.")
     except (EOFError, pickle.UnpicklingError):
          messagebox.showerror(None, f"Error loading pickle file. Ensure the file is valid.")
+    update_dropdown(app, user, app.frames["eeditor"].event_edit_dropdown)
     destroy_event_window.destroy()
 

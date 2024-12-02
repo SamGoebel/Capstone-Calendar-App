@@ -30,20 +30,39 @@ def show_message(app, title, message):
     message_box.geometry("200x110")
 
 def get_image(user):
-    current_dir = os.path.dirname(__file__)
-    user_image_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_image.png')
     
-    image = Image.open(user_image_path)
+    if user != None:
+        current_dir = os.path.dirname(__file__)
+        user_image_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_image.png')
+        
+        image = Image.open(user_image_path)
 
-    size = min(image.size)  # Square size (smaller dimension)
-    image = image.resize((size, size))  # Resize to make it square
-    mask = Image.new("L", (size, size), 0)
-    draw = ImageDraw.Draw(mask)
-    draw.ellipse((0, 0, size, size), fill=255)  # Draw a circle on the mask
+        size = min(image.size)  # Square size (smaller dimension)
+        image = image.resize((size, size))  # Resize to make it square
+        mask = Image.new("L", (size, size), 0)
+        draw = ImageDraw.Draw(mask)
+        draw.ellipse((0, 0, size, size), fill=255)  # Draw a circle on the mask
 
-    image.putalpha(mask)  # Apply the alpha mask to make it circular
+        image.putalpha(mask)  # Apply the alpha mask to make it circular
+        
+        return ctk.CTkImage(dark_image = image, size=(60, 60))
     
-    return ctk.CTkImage(dark_image = image, size=(60, 60))
+    else:
+        current_dir = os.path.dirname(__file__)
+        user_image_path = os.path.join(current_dir, 'resources', 'cuw_default.png')
+        
+        image = Image.open(user_image_path)
+
+        size = min(image.size)  # Square size (smaller dimension)
+        image = image.resize((size, size))  # Resize to make it square
+        mask = Image.new("L", (size, size), 0)
+        draw = ImageDraw.Draw(mask)
+        draw.ellipse((0, 0, size, size), fill=255)  # Draw a circle on the mask
+
+        image.putalpha(mask)  # Apply the alpha mask to make it circular
+        
+        return ctk.CTkImage(dark_image = image, size=(60, 60))
+
 
 # Function to open the file dialog and select an image
 def open_file_dialog():
@@ -54,10 +73,13 @@ def open_file_dialog():
 
     if file_path:
         selected_image = Image.open(file_path)
+        print("image selected")
+        return selected_image
     else:
         print("No file selected.")
     
     app.quit()  
+
 
 # Function to save the image to the user's folder
 def save_image(user_name):
@@ -182,8 +204,10 @@ def load_user_calendar(app, user, label, image_label):
             try:
                 user_image = get_image(user)  # Load the image dynamically
                 image_label.configure(image=user_image, text="")  # Update the label with the image
+            
             except FileNotFoundError:
-                image_label.configure(image=None, text="")
+                user_image = get_image(None)
+                image_label.configure(image= user_image, text="")
             
             app.show_frame("uviewer")
             
@@ -204,7 +228,7 @@ def new_user(app, user_dropdown):
     user_maker_window.title("Add User Details")
     user_maker_window.geometry("375x300")
 
-    selected_image = None
+    #selected_image = None
     selected_file = None
 
     enter_name = ctk.CTkEntry(user_maker_window, placeholder_text = "Enter Name")
@@ -344,8 +368,6 @@ def adding_events(app, calendar, date, event, importance, notes, user):
 
 def editing_events(app, calendar, old_date, date, event, importance, notes, user, event_window):
 
-    print(event)
-
     event_edit = edit_events(calendar, old_date, date, event, importance, notes, event_window)
     if event_edit != 0:
         save_event_list(event_edit, user)
@@ -410,12 +432,8 @@ def open_event_editor_window(app, current_user, event):
     selected_event = event
     user_calendar =  load_user_calendar_for_events(app.frames["uconfig"].dropdown.get())
     split_event_text = selected_event.split(":", 1)[1].strip()
-
-    print(split_event_text)
     
     details = find_event_details(split_event_text, user_calendar_path)
-
-    print(details)
 
     event_text = details['events']
     event_date = details['date']
@@ -426,8 +444,6 @@ def open_event_editor_window(app, current_user, event):
     event_editor_window = ctk.CTkToplevel(app)
     event_editor_window.title("Edit Event")
     event_editor_window.geometry("500x400")
-    
-    print(event_text)
     
     # Add a label in the temporary window
     label = ctk.CTkLabel(event_editor_window, text="Edit your events here:")
@@ -452,10 +468,10 @@ def open_event_editor_window(app, current_user, event):
         edit_notes.insert(0, event_notes)
 
 
-    save_event_button = ctk.CTkButton(event_editor_window, text="Save Event", command= lambda: editing_events(app, user_calendar, event_date, edit_date.get(), edit_name.get(), edit_importance.get(), edit_notes.get(), user, event_editor_window))
+    save_event_button = ctk.CTkButton(event_editor_window, text="Save Event", command= lambda: editing_events(app, user_calendar, event_date, edit_date.get(), event_text, edit_importance.get(), edit_notes.get(), user, event_editor_window))
     save_event_button.pack(pady=5)
     
-    delete_event_button = ctk.CTkButton(event_editor_window, text="Delete Event", command= lambda: delete_event(user_calendar_path, event_text, event_editor_window))
+    delete_event_button = ctk.CTkButton(event_editor_window, text="Delete Event", command= lambda: delete_event(app, user, user_calendar_path, split_event_text, event_editor_window))
     delete_event_button.pack(pady=5)
     
     close_button = ctk.CTkButton(event_editor_window, text="Close Window", command=event_editor_window.destroy)
