@@ -1,7 +1,7 @@
 import pickle, pprint, os
 from datetime import datetime, timedelta
 from tkinter import messagebox
-from collections import defaultdict
+
 
 def generate_dates_with_events_until_2100():
     # Create an empty list to store the dates and events
@@ -157,10 +157,79 @@ def add_events(event_calendar, date, event, importance, notes):
         return 0
     return event_calendar
 
+def edit_events(event_calendar, old_date, new_date, new_event, new_importance, new_notes, event_window):
+
+   # print(new_event)
+    try:
+        # Find the old date in the calendar
+        old_date_index = None
+        for index, entry in enumerate(event_calendar):
+            if entry['date'] == old_date:
+                old_date_index = index
+                break
+
+        if old_date_index is None:
+            messagebox.showinfo(None, "Old date not found.")
+            return event_calendar
+
+        # Handle same date scenario
+        if old_date == new_date:
+            event_calendar[old_date_index]['events'] = new_event if new_event else ''
+            event_calendar[old_date_index]['importance'] = new_importance if new_importance else ''
+            event_calendar[old_date_index]['notes'] = new_notes if new_notes else ''
+        
+        else:
+            # Find or create the entry for the new date
+            new_date_index = None
+            for index, entry in enumerate(event_calendar):
+                if entry['date'] == new_date:
+                    new_date_index = index
+                    break
+
+            if new_date_index is not None:
+                # Overwrite the new date's data
+                event_calendar[new_date_index]['events'] = new_event 
+                print(event_calendar[new_date_index]['events'])
+                event_calendar[new_date_index]['importance'] = new_importance 
+                event_calendar[new_date_index]['notes'] = new_notes 
+
+            else:
+                # Add a new entry for the new date
+                event_calendar[new_date_index]['events'].append(new_event)
+    
+                if new_importance not in [None, '']:
+                    event_calendar[new_date_index]['importance'].append(new_importance)
+                else:
+                    event_calendar[new_date_index]['importance'].append('')
+            
+                if new_notes not in [None, '']:
+                    event_calendar[new_date_index]['notes'].append(new_notes)
+                else:
+                    event_calendar[new_date_index]['notes'].append('')
+
+            # Clear the old date's values
+            event_calendar[old_date_index]['events'] = ""
+            event_calendar[old_date_index]['importance'] = ""
+            event_calendar[old_date_index]['notes'] = ""
+
+    except (TypeError, KeyError) as e:
+        messagebox.showinfo(None, f"An error occurred: {str(e)}")
+        return event_calendar
+
+    event_window.destroy()
+
+    return event_calendar
+
+
 def save_event_list(gen, user):
     event_adder = gen   
     current_dir = os.path.dirname(__file__)
     user_calendar_path = os.path.join(current_dir, 'users', f'{user}', f'{user}_calendar.pkl')
+    
+    x = 0
+    for x in range(30):
+        print(event_adder[x])
+        x = x + 1 
     
     with open(user_calendar_path, 'wb') as file:
         pickle.dump(event_adder, file)
@@ -213,6 +282,7 @@ def no_date_event_search(gen, searched_event):
 
 def delete_event(pickle_path, event_to_delete, destroy_event_window):
     # Load the pickle file
+    print(type(event_to_delete))
     try:
         with open(pickle_path, 'rb') as file:
             calendar_data = pickle.load(file)

@@ -55,18 +55,18 @@ def pickle_to_text(pickle_file, text_file):
     with open(text_file, 'w') as f:
         for entry in data:
             f.write(f"Date: {entry['date']}\n")
-            f.write(f"Events: {', '.join(entry['events'])}\n")
+            f.write(f"Events: {entry['events']}\n")
             f.write(f"Importance: {', '.join(entry['importance'])}\n")
             f.write(f"Notes: {', '.join(entry['notes'])}\n")
-            f.write(f"Present Users: {', '.join(entry['present_users'])}\n")
-            f.write(f"Users with Events: {', '.join(entry['some_users'])}\n")  # Added line for 'some_users'
+            #f.write(f"Present Users: {', '.join(entry['present_users'])}\n")
+            #f.write(f"Users with Events: {', '.join(entry['some_users'])}\n")  # Added line for 'some_users'
             f.write("\n")  # Add a blank line between entries
 
-# Example usage
-current_dir = os.path.dirname(__file__)
-users_folder = os.path.join(current_dir, 'users')
-output_pickle_file = os.path.join(current_dir, "aggregated_calendar.pkl")
-output_text_file = os.path.join(current_dir, "aggregated_calendar.txt")
 
-universal_calendar_data(users_folder, output_pickle_file)
-pickle_to_text(output_pickle_file, output_text_file)
+current_dir = os.path.dirname(__file__)
+users_folder = os.path.join(current_dir, 'users', 'Raden', 'raden_calendar.pkl')
+#output_pickle_file = os.path.join(current_dir, "output_calendar.pkl")
+output_text_file = os.path.join(current_dir, "output_calendar.txt")
+
+#universal_calendar_data(users_folder, output_pickle_file)
+pickle_to_text(users_folder, output_text_file)

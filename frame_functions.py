@@ -1,6 +1,6 @@
 import customtkinter as ctk
 import os, pickle, shutil
-from calendar_generator import generate_dates_with_events_until_2100, event_search, save_calendar, load_calendar, save_user_calendar, no_date_event_search, delete_event, save_event_list, add_events
+from calendar_generator import generate_dates_with_events_until_2100, event_search, save_calendar, load_calendar, save_user_calendar, no_date_event_search, delete_event, save_event_list, add_events, edit_events
 from calendar_generator import generate_dates_with_events_until_2100_universal, save_universal_calendar, load_universal_calendar
 from PIL import Image, ImageDraw
 from PyQt5.QtWidgets import QApplication, QFileDialog
@@ -342,6 +342,18 @@ def adding_events(app, calendar, date, event, importance, notes, user):
     else:
         return 0
 
+def editing_events(app, calendar, old_date, date, event, importance, notes, user, event_window):
+
+    print(event)
+
+    event_edit = edit_events(calendar, old_date, date, event, importance, notes, event_window)
+    if event_edit != 0:
+        save_event_list(event_edit, user)
+        update_dropdown(app, app.frames["uconfig"].dropdown.get(), app.frames["eeditor"].event_edit_dropdown)
+
+    else:
+        return 0
+
 def load_event_dates_with_details(app, current_user):
     user = current_user
     current_dir = os.path.dirname(__file__)
@@ -385,6 +397,7 @@ def find_event_details(event_name, path):
         data = pickle.load(file)
     
     for entry in data:
+        print(entry.get('events', []))
         if event_name in entry.get('events', []):  # Check if the event exists in the 'events' list
             return entry  # Return the matching dictionary
 
@@ -395,9 +408,14 @@ def open_event_editor_window(app, current_user, event):
     user = current_user
     user_calendar_path = os.path.join(os.path.dirname(__file__), 'users', f'{user}', f'{user}_calendar.pkl')
     selected_event = event
-    event_text = selected_event.split(":", 1)[1].strip()
+    user_calendar =  load_user_calendar_for_events(app.frames["uconfig"].dropdown.get())
+    split_event_text = selected_event.split(":", 1)[1].strip()
+
+    print(split_event_text)
     
-    details = find_event_details(event_text, user_calendar_path)
+    details = find_event_details(split_event_text, user_calendar_path)
+
+    print(details)
 
     event_text = details['events']
     event_date = details['date']
@@ -409,6 +427,7 @@ def open_event_editor_window(app, current_user, event):
     event_editor_window.title("Edit Event")
     event_editor_window.geometry("500x400")
     
+    print(event_text)
     
     # Add a label in the temporary window
     label = ctk.CTkLabel(event_editor_window, text="Edit your events here:")
@@ -433,7 +452,7 @@ def open_event_editor_window(app, current_user, event):
         edit_notes.insert(0, event_notes)
 
 
-    save_event_button = ctk.CTkButton(event_editor_window, text="Save Event", command= lambda: delete_event(user_calendar_path, event_text, event_editor_window))
+    save_event_button = ctk.CTkButton(event_editor_window, text="Save Event", command= lambda: editing_events(app, user_calendar, event_date, edit_date.get(), edit_name.get(), edit_importance.get(), edit_notes.get(), user, event_editor_window))
     save_event_button.pack(pady=5)
     
     delete_event_button = ctk.CTkButton(event_editor_window, text="Delete Event", command= lambda: delete_event(user_calendar_path, event_text, event_editor_window))
